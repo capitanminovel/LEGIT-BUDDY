@@ -9,1654 +9,739 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root {
-  --bg: #080808;
-  --surface: #111;
-  --surface2: #191919;
-  --border: #232323;
-  --green: #00e87a;
-  --green-dim: rgba(0,232,122,0.12);
-  --amber: #ffb830;
-  --blue: #5eb8ff;
-  --purple: #b48bff;
-  --red: #ff5e6c;
-  --text: #f0f0f0;
-  --text-dim: #666;
-  --text-mid: #999;
-  --drawer-h: 92vh;
+  --bg:#080808; --surface:#111; --surface2:#191919; --border:#232323;
+  --green:#00e87a; --green-dim:rgba(0,232,122,0.12);
+  --amber:#ffb830; --blue:#5eb8ff; --purple:#b48bff; --red:#ff5e6c;
+  --text:#f0f0f0; --text-dim:#666; --text-mid:#999;
 }
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overflow:hidden}
+body{background:var(--bg);color:var(--text);font-family:'Outfit',sans-serif;font-size:15px}
+#app{height:100vh;display:flex;flex-direction:column;overflow:hidden}
 
-* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+/* HEADER */
+.hdr{background:var(--bg);padding:14px 16px 10px;border-bottom:1px solid var(--border);flex-shrink:0;z-index:10}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
+.brand{font-family:'Bebas Neue',sans-serif;font-size:22px;letter-spacing:.06em;color:var(--green);line-height:1}
+.brand span{color:var(--text-dim)}
+.hdr-actions{display:flex;gap:8px}
+.icon-btn{width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:background .15s;position:relative}
+.icon-btn:active{background:var(--surface2)}
+.badge{position:absolute;top:-4px;right:-4px;width:10px;height:10px;background:var(--green);border-radius:50%;border:2px solid var(--bg);display:none}
+.badge.show{display:block}
+.srch-wrap{position:relative}
+.srch-icon{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:15px;pointer-events:none}
+#search{width:100%;background:var(--surface);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Outfit',sans-serif;font-size:15px;padding:9px 36px;outline:none;transition:border-color .15s}
+#search:focus{border-color:var(--green)}
+#search::placeholder{color:var(--text-dim)}
+.srch-x{position:absolute;right:10px;top:50%;transform:translateY(-50%);color:var(--text-dim);font-size:18px;cursor:pointer;display:none;line-height:1}
+.srch-x.show{display:block}
 
-html, body { height: 100%; overflow: hidden; }
+/* FILTERS */
+.filters{padding:10px 16px;border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none;display:flex;gap:6px;white-space:nowrap}
+.filters::-webkit-scrollbar{display:none}
+.pill{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text-mid);cursor:pointer;transition:all .15s;flex-shrink:0}
+.pill:active{opacity:.7}
+.p-all.on{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.p-flower.on{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.p-preroll.on{border-color:var(--amber);color:var(--amber);background:rgba(255,184,48,.1)}
+.p-vape.on{border-color:var(--blue);color:var(--blue);background:rgba(94,184,255,.1)}
+.p-edible.on{border-color:var(--purple);color:var(--purple);background:rgba(180,139,255,.1)}
+.p-indica.on{border-color:var(--blue);color:var(--blue);background:rgba(94,184,255,.1)}
+.p-sativa.on{border-color:var(--amber);color:var(--amber);background:rgba(255,184,48,.1)}
+.p-hybrid.on{border-color:var(--green);color:var(--green);background:var(--green-dim)}
+.pill-sep{width:1px;background:var(--border);flex-shrink:0;margin:4px 2px}
 
-body {
-  background: var(--bg);
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  font-size: 15px;
-}
+/* LIST */
+#list{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:8px 0 80px}
+.list-meta{font-family:'Space Mono',monospace;font-size:10px;color:var(--text-dim);padding:6px 16px 4px;letter-spacing:.08em}
+.card{display:flex;align-items:center;padding:12px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .1s;gap:12px}
+.card:active{background:var(--surface)}
+.cbar{width:3px;border-radius:2px;flex-shrink:0;align-self:stretch;min-height:40px}
+.cbar-flower{background:var(--green)}
+.cbar-preroll{background:var(--amber)}
+.cbar-vape{background:var(--blue)}
+.cbar-edible{background:var(--purple)}
+.cmain{flex:1;min-width:0}
+.cname{font-weight:600;font-size:15px;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;line-height:1.3}
+.csub{font-size:12px;color:var(--text-dim);margin-top:2px;display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.cbrand{color:var(--text-mid)}
+.cdot-researched{width:6px;height:6px;border-radius:50%;background:var(--green);flex-shrink:0}
+.cright{text-align:right;flex-shrink:0}
+.cthc{font-family:'Space Mono',monospace;font-size:13px;color:var(--green);font-weight:700}
+.cthc.na{color:var(--text-dim);font-size:11px}
+.cprice{font-family:'Space Mono',monospace;font-size:12px;color:var(--amber);margin-top:2px}
+.tdot{display:inline-block;width:5px;height:5px;border-radius:50%;flex-shrink:0}
+.tdot-indica{background:var(--blue)}
+.tdot-indica-dom{background:#a78bfa}
+.tdot-sativa{background:var(--amber)}
+.tdot-sativa-dom{background:#ffa94d}
+.tdot-hybrid{background:var(--green)}
+.empty{text-align:center;padding:60px 32px;color:var(--text-dim)}
+.empty .e-icon{font-size:40px;margin-bottom:12px}
+.empty p{font-size:14px;line-height:1.6}
 
-/* ─── LAYOUT ─── */
-#app {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+/* DRAWER */
+#overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:40;opacity:0;pointer-events:none;transition:opacity .25s;backdrop-filter:blur(2px)}
+#overlay.show{opacity:1;pointer-events:all}
+#drawer{position:fixed;bottom:0;left:0;right:0;height:92vh;background:var(--surface);border-top:1px solid var(--border);border-radius:20px 20px 0 0;z-index:50;transform:translateY(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;overflow:hidden}
+#drawer.open{transform:translateY(0)}
+.d-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;flex-shrink:0}
+#drawer-scroll{flex:1;overflow-y:auto;-webkit-overflow-scrolling:touch;padding:16px 20px 40px}
+.d-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:4px}
+.d-name{font-family:'Bebas Neue',sans-serif;font-size:32px;letter-spacing:.03em;color:var(--text);line-height:1.1;flex:1;margin-right:12px}
+.d-close{width:32px;height:32px;background:var(--surface2);border:1px solid var(--border);border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;color:var(--text-mid);flex-shrink:0;margin-top:4px}
+.d-brand{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--text-dim);margin-bottom:14px}
+.d-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:20px}
+.stat{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center}
+.stat-val{font-family:'Space Mono',monospace;font-size:14px;font-weight:700;color:var(--text);line-height:1}
+.stat-val.g{color:var(--green)}
+.stat-val.a{color:var(--amber)}
+.stat-lbl{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--text-dim);margin-top:4px}
+.tbadge{display:inline-flex;align-items:center;gap:5px;font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.08em;text-transform:uppercase;padding:4px 10px;border-radius:4px;border:1px solid;margin-bottom:16px}
+.tb-indica{color:var(--blue);border-color:rgba(94,184,255,.3);background:rgba(94,184,255,.08)}
+.tb-indica-dom{color:#b48bff;border-color:rgba(180,139,255,.3);background:rgba(180,139,255,.08)}
+.tb-sativa{color:var(--amber);border-color:rgba(255,184,48,.3);background:rgba(255,184,48,.08)}
+.tb-sativa-dom{color:#ffa94d;border-color:rgba(255,169,77,.3);background:rgba(255,169,77,.08)}
+.tb-hybrid{color:var(--green);border-color:rgba(0,232,122,.3);background:var(--green-dim)}
 
-/* ─── HEADER ─── */
-.header {
-  background: var(--bg);
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  z-index: 10;
-}
+/* RESEARCH UI */
+.r-section{border-top:1px solid var(--border);padding-top:18px;margin-top:4px}
+.r-label{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.r-dot{width:6px;height:6px;border-radius:50%;background:var(--green);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+.r-btn{width:100%;background:var(--green-dim);border:1px solid rgba(0,232,122,.3);border-radius:10px;color:var(--green);font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;padding:13px;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px}
+.r-btn:active{opacity:.7}
+.r-btn.loading{opacity:.6;cursor:not-allowed}
+.r-block{margin-bottom:14px}
+.r-block-title{font-family:'Space Mono',monospace;font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:6px}
+.r-block-text{font-size:13px;color:var(--text-mid);line-height:1.6}
+.r-block-text.italic{font-style:italic}
+.r-lineage{font-family:'Space Mono',monospace;font-size:12px;color:var(--text-mid);padding:8px 12px;background:var(--surface2);border-radius:6px;border:1px solid var(--border)}
+.r-tags{display:flex;flex-wrap:wrap;gap:5px}
+.r-tag{font-size:12px;padding:3px 9px;border-radius:4px;border:1px solid var(--border);color:var(--text-mid);background:var(--surface2)}
+.r-tag.effect{border-color:rgba(0,232,122,.2);color:var(--green);background:var(--green-dim)}
+.r-tag.therapeutic{border-color:rgba(116,201,168,.2);color:#74c9a8;background:rgba(116,201,168,.08)}
+.r-tag.negative{border-color:rgba(255,94,108,.2);color:var(--red);background:rgba(255,94,108,.08)}
+.r-tag.terpene{border-color:rgba(94,184,255,.2);color:var(--blue);background:rgba(94,184,255,.08)}
+.r-tag.flavor{border-color:rgba(255,184,48,.2);color:var(--amber);background:rgba(255,184,48,.08)}
+.r-tag.aroma{border-color:rgba(255,204,102,.2);color:#ffcc66;background:rgba(255,204,102,.08)}
+.r-tag.best{border-color:rgba(180,139,255,.2);color:#b48bff;background:rgba(180,139,255,.08)}
+.r-ts{font-family:'Space Mono',monospace;font-size:9px;color:var(--text-dim);margin-top:14px}
+.r-error{font-size:13px;color:var(--red);padding:10px 12px;background:rgba(255,94,108,.08);border:1px solid rgba(255,94,108,.2);border-radius:8px}
+.r-rerun{width:100%;background:transparent;border:1px solid var(--border);border-radius:8px;color:var(--text-dim);font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.06em;text-transform:uppercase;padding:9px;cursor:pointer;margin-top:12px}
 
-.header-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 10px;
-}
+/* SETTINGS */
+#settings{position:fixed;inset:0;background:var(--bg);z-index:100;transform:translateX(100%);transition:transform .3s cubic-bezier(.32,.72,0,1);display:flex;flex-direction:column;overflow:hidden}
+#settings.open{transform:translateX(0)}
+.s-hdr{display:flex;align-items:center;gap:12px;padding:20px 16px 16px;border-bottom:1px solid var(--border);flex-shrink:0}
+.s-back{width:36px;height:36px;background:var(--surface);border:1px solid var(--border);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px}
+.s-title{font-family:'Bebas Neue',sans-serif;font-size:24px;letter-spacing:.05em;color:var(--text)}
+.s-scroll{flex:1;overflow-y:auto;padding:20px 16px 60px}
+.s-group{margin-bottom:28px}
+.s-group-title{font-family:'Space Mono',monospace;font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--text-dim);margin-bottom:10px}
+.s-desc{font-size:13px;color:var(--text-mid);line-height:1.6;margin-bottom:10px}
+.s-btn{width:100%;padding:13px;border-radius:10px;border:1px solid;font-family:'Space Mono',monospace;font-size:11px;letter-spacing:.08em;text-transform:uppercase;cursor:pointer;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:8px;margin-top:8px}
+.s-btn:active{opacity:.7}
+.btn-green{background:var(--green-dim);border-color:rgba(0,232,122,.3);color:var(--green)}
+.btn-amber{background:rgba(255,184,48,.1);border-color:rgba(255,184,48,.3);color:var(--amber)}
+.btn-red{background:rgba(255,94,108,.08);border-color:rgba(255,94,108,.2);color:var(--red)}
+.s-status{font-family:'Space Mono',monospace;font-size:11px;color:var(--text-dim);margin-top:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:8px;line-height:1.5;display:none}
+.s-status.ok{color:var(--green);border-color:rgba(0,232,122,.2)}
+.s-status.err{color:var(--red);border-color:rgba(255,94,108,.2)}
 
-.brand {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 22px;
-  letter-spacing: 0.06em;
-  color: var(--green);
-  line-height: 1;
-}
+/* SPINNER */
+@keyframes spin{to{transform:rotate(360deg)}}
+.spinner{width:14px;height:14px;border:2px solid rgba(255,255,255,.1);border-top-color:currentColor;border-radius:50%;animation:spin .7s linear infinite;display:inline-block;flex-shrink:0}
 
-.brand span { color: var(--text-dim); }
-
-.header-actions { display: flex; gap: 8px; }
-
-.icon-btn {
-  width: 36px; height: 36px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  font-size: 16px;
-  transition: background 0.15s;
-  position: relative;
-}
-.icon-btn:active { background: var(--surface2); }
-.icon-btn .badge {
-  position: absolute; top: -4px; right: -4px;
-  width: 10px; height: 10px;
-  background: var(--green);
-  border-radius: 50%;
-  border: 2px solid var(--bg);
-  display: none;
-}
-.icon-btn .badge.show { display: block; }
-
-/* ─── SEARCH ─── */
-.search-wrap {
-  position: relative;
-}
-.search-icon {
-  position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
-  color: var(--text-dim); font-size: 15px; pointer-events: none;
-}
-#search {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-family: 'Outfit', sans-serif;
-  font-size: 15px;
-  padding: 9px 36px 9px 36px;
-  outline: none;
-  transition: border-color 0.15s;
-}
-#search:focus { border-color: var(--green); }
-#search::placeholder { color: var(--text-dim); }
-.search-clear {
-  position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
-  color: var(--text-dim); font-size: 18px; cursor: pointer;
-  display: none; line-height: 1;
-}
-.search-clear.show { display: block; }
-
-/* ─── FILTERS ─── */
-.filter-bar {
-  padding: 10px 16px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-  overflow-x: auto;
-  scrollbar-width: none;
-  display: flex;
-  gap: 6px;
-  white-space: nowrap;
-}
-.filter-bar::-webkit-scrollbar { display: none; }
-
-.pill {
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  padding: 5px 12px;
-  border-radius: 20px;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text-mid);
-  cursor: pointer;
-  transition: all 0.15s;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-.pill:active { opacity: 0.7; }
-.pill.active-all { border-color: var(--green); color: var(--green); background: var(--green-dim); }
-.pill.active-flower { border-color: var(--green); color: var(--green); background: var(--green-dim); }
-.pill.active-preroll { border-color: var(--amber); color: var(--amber); background: rgba(255,184,48,0.1); }
-.pill.active-vape { border-color: var(--blue); color: var(--blue); background: rgba(94,184,255,0.1); }
-.pill.active-edible { border-color: var(--purple); color: var(--purple); background: rgba(180,139,255,0.1); }
-.pill.active-indica { border-color: var(--blue); color: var(--blue); background: rgba(94,184,255,0.1); }
-.pill.active-sativa { border-color: var(--amber); color: var(--amber); background: rgba(255,184,48,0.1); }
-.pill.active-hybrid { border-color: var(--green); color: var(--green); background: var(--green-dim); }
-
-.pill-divider {
-  width: 1px;
-  background: var(--border);
-  flex-shrink: 0;
-  margin: 4px 2px;
-}
-
-/* ─── PRODUCT LIST ─── */
-#product-list {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 8px 0 80px;
-}
-
-.list-meta {
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  color: var(--text-dim);
-  padding: 6px 16px 4px;
-  letter-spacing: 0.08em;
-}
-
-.product-card {
-  display: flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--border);
-  cursor: pointer;
-  transition: background 0.1s;
-  gap: 12px;
-}
-.product-card:active { background: var(--surface); }
-
-.card-type-bar {
-  width: 3px;
-  border-radius: 2px;
-  flex-shrink: 0;
-  align-self: stretch;
-  min-height: 40px;
-}
-.bar-flower { background: var(--green); }
-.bar-preroll { background: var(--amber); }
-.bar-vape { background: var(--blue); }
-.bar-edible { background: var(--purple); }
-
-.card-main { flex: 1; min-width: 0; }
-.card-name {
-  font-weight: 600;
-  font-size: 15px;
-  color: var(--text);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.3;
-}
-.card-sub {
-  font-size: 12px;
-  color: var(--text-dim);
-  margin-top: 2px;
-  display: flex;
-  gap: 6px;
-  align-items: center;
-  flex-wrap: wrap;
-}
-.card-brand { color: var(--text-mid); }
-.card-researched {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  flex-shrink: 0;
-}
-
-.card-right {
-  text-align: right;
-  flex-shrink: 0;
-}
-.card-thc {
-  font-family: 'Space Mono', monospace;
-  font-size: 13px;
-  color: var(--green);
-  font-weight: 700;
-}
-.card-thc.no-thc { color: var(--text-dim); font-size: 11px; }
-.card-price {
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  color: var(--amber);
-  margin-top: 2px;
-}
-
-.type-dot {
-  display: inline-block;
-  width: 5px; height: 5px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-.dot-indica { background: var(--blue); }
-.dot-indica-dom { background: #a78bfa; }
-.dot-sativa { background: var(--amber); }
-.dot-sativa-dom { background: #ffa94d; }
-.dot-hybrid { background: var(--green); }
-
-.empty-state {
-  text-align: center;
-  padding: 60px 32px;
-  color: var(--text-dim);
-}
-.empty-state .emoji { font-size: 40px; margin-bottom: 12px; }
-.empty-state p { font-size: 14px; line-height: 1.6; }
-
-/* ─── PRODUCT DRAWER ─── */
-#drawer-overlay {
-  position: fixed; inset: 0;
-  background: rgba(0,0,0,0.6);
-  z-index: 40;
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.25s;
-  backdrop-filter: blur(2px);
-}
-#drawer-overlay.show {
-  opacity: 1;
-  pointer-events: all;
-}
-
-#product-drawer {
-  position: fixed;
-  bottom: 0; left: 0; right: 0;
-  height: var(--drawer-h);
-  background: var(--surface);
-  border-top: 1px solid var(--border);
-  border-radius: 20px 20px 0 0;
-  z-index: 50;
-  transform: translateY(100%);
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-#product-drawer.open {
-  transform: translateY(0);
-}
-
-.drawer-handle {
-  width: 36px; height: 4px;
-  background: var(--border);
-  border-radius: 2px;
-  margin: 12px auto 0;
-  flex-shrink: 0;
-}
-
-.drawer-scroll {
-  flex: 1;
-  overflow-y: auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 16px 20px 40px;
-}
-
-.drawer-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  margin-bottom: 4px;
-}
-
-.drawer-name {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 32px;
-  letter-spacing: 0.03em;
-  color: var(--text);
-  line-height: 1.1;
-  flex: 1;
-  margin-right: 12px;
-}
-
-.drawer-close {
-  width: 32px; height: 32px;
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
-  color: var(--text-mid);
-  flex-shrink: 0;
-  margin-top: 4px;
-}
-
-.drawer-brand {
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 14px;
-}
-
-.drawer-stats {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.stat-box {
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 10px 8px;
-  text-align: center;
-}
-.stat-val {
-  font-family: 'Space Mono', monospace;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text);
-  line-height: 1;
-}
-.stat-val.green { color: var(--green); }
-.stat-val.amber { color: var(--amber); }
-.stat-label {
-  font-family: 'Space Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-top: 4px;
-}
-
-.type-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 4px 10px;
-  border-radius: 4px;
-  border: 1px solid;
-  margin-bottom: 16px;
-}
-.badge-indica { color: var(--blue); border-color: rgba(94,184,255,0.3); background: rgba(94,184,255,0.08); }
-.badge-indica-dom { color: #b48bff; border-color: rgba(180,139,255,0.3); background: rgba(180,139,255,0.08); }
-.badge-sativa { color: var(--amber); border-color: rgba(255,184,48,0.3); background: rgba(255,184,48,0.08); }
-.badge-sativa-dom { color: #ffa94d; border-color: rgba(255,169,77,0.3); background: rgba(255,169,77,0.08); }
-.badge-hybrid { color: var(--green); border-color: rgba(0,232,122,0.3); background: var(--green-dim); }
-
-/* ─── RESEARCH SECTION ─── */
-.research-section {
-  border-top: 1px solid var(--border);
-  padding-top: 18px;
-  margin-top: 4px;
-}
-
-.research-label {
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.research-label .dot-live {
-  width: 6px; height: 6px;
-  border-radius: 50%;
-  background: var(--green);
-  animation: pulse 2s infinite;
-}
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
-}
-
-.research-btn {
-  width: 100%;
-  background: var(--green-dim);
-  border: 1px solid rgba(0,232,122,0.3);
-  border-radius: 10px;
-  color: var(--green);
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  padding: 13px;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-}
-.research-btn:active { opacity: 0.7; }
-.research-btn.loading {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.research-results { margin-top: 0; }
-
-.r-block {
-  margin-bottom: 16px;
-}
-.r-block-title {
-  font-family: 'Space Mono', monospace;
-  font-size: 9px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 6px;
-}
-.r-block-text {
-  font-size: 13px;
-  color: var(--text-mid);
-  line-height: 1.6;
-}
-.r-tags {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-.r-tag {
-  font-size: 12px;
-  padding: 3px 9px;
-  border-radius: 4px;
-  border: 1px solid var(--border);
-  color: var(--text-mid);
-  background: var(--surface2);
-}
-.r-tag.effect { border-color: rgba(0,232,122,0.2); color: var(--green); background: var(--green-dim); }
-.r-tag.terpene { border-color: rgba(94,184,255,0.2); color: var(--blue); background: rgba(94,184,255,0.08); }
-.r-tag.flavor { border-color: rgba(255,184,48,0.2); color: var(--amber); background: rgba(255,184,48,0.08); }
-.r-tag.best { border-color: rgba(180,139,255,0.2); color: #b48bff; background: rgba(180,139,255,0.08); }
-.r-tag.therapeutic { border-color: rgba(116,201,168,0.2); color: #74c9a8; background: rgba(116,201,168,0.08); }
-.r-tag.negative { border-color: rgba(255,94,108,0.2); color: var(--red); background: rgba(255,94,108,0.08); }
-.r-tag.aroma { border-color: rgba(255,184,48,0.15); color: #ffcc66; background: rgba(255,204,102,0.08); }
-
-.r-lineage {
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  color: var(--text-mid);
-  padding: 8px 12px;
-  background: var(--surface2);
-  border-radius: 6px;
-  border: 1px solid var(--border);
-}
-
-.r-error {
-  font-size: 13px;
-  color: var(--red);
-  padding: 10px 12px;
-  background: rgba(255,94,108,0.08);
-  border: 1px solid rgba(255,94,108,0.2);
-  border-radius: 8px;
-}
-
-.r-timestamp {
-  font-family: 'Space Mono', monospace;
-  font-size: 9px;
-  color: var(--text-dim);
-  margin-top: 16px;
-}
-
-/* ─── SETTINGS OVERLAY ─── */
-#settings-overlay {
-  position: fixed; inset: 0;
-  background: var(--bg);
-  z-index: 100;
-  transform: translateX(100%);
-  transition: transform 0.3s cubic-bezier(0.32, 0.72, 0, 1);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-#settings-overlay.open {
-  transform: translateX(0);
-}
-
-.settings-header {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 20px 16px 16px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.settings-back {
-  width: 36px; height: 36px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer; font-size: 18px;
-}
-
-.settings-title {
-  font-family: 'Bebas Neue', sans-serif;
-  font-size: 24px;
-  letter-spacing: 0.05em;
-  color: var(--text);
-}
-
-.settings-scroll {
-  flex: 1;
-  overflow-y: auto;
-  padding: 20px 16px 60px;
-}
-
-.settings-group {
-  margin-bottom: 28px;
-}
-
-.settings-group-title {
-  font-family: 'Space Mono', monospace;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--text-dim);
-  margin-bottom: 10px;
-}
-
-.settings-desc {
-  font-size: 13px;
-  color: var(--text-mid);
-  line-height: 1.6;
-  margin-bottom: 10px;
-}
-
-.settings-desc a { color: var(--green); text-decoration: none; }
-
-.settings-input {
-  width: 100%;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  color: var(--text);
-  font-family: 'Space Mono', monospace;
-  font-size: 12px;
-  padding: 12px 14px;
-  outline: none;
-  transition: border-color 0.15s;
-  letter-spacing: 0.04em;
-}
-.settings-input:focus { border-color: var(--green); }
-.settings-input::placeholder { color: var(--text-dim); }
-
-.settings-btn {
-  width: 100%;
-  padding: 13px;
-  border-radius: 10px;
-  border: 1px solid;
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  margin-top: 10px;
-}
-.settings-btn:active { opacity: 0.7; }
-
-.btn-green {
-  background: var(--green-dim);
-  border-color: rgba(0,232,122,0.3);
-  color: var(--green);
-}
-.btn-amber {
-  background: rgba(255,184,48,0.1);
-  border-color: rgba(255,184,48,0.3);
-  color: var(--amber);
-}
-.btn-red {
-  background: rgba(255,94,108,0.08);
-  border-color: rgba(255,94,108,0.2);
-  color: var(--red);
-}
-
-.settings-status {
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  color: var(--text-dim);
-  margin-top: 10px;
-  padding: 10px 12px;
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  line-height: 1.5;
-}
-
-.settings-status.success { color: var(--green); border-color: rgba(0,232,122,0.2); }
-.settings-status.error { color: var(--red); border-color: rgba(255,94,108,0.2); }
-
-/* ─── LOADING SPINNER ─── */
-@keyframes spin { to { transform: rotate(360deg); } }
-.spinner {
-  width: 14px; height: 14px;
-  border: 2px solid rgba(255,255,255,0.1);
-  border-top-color: currentColor;
-  border-radius: 50%;
-  animation: spin 0.7s linear infinite;
-  display: inline-block;
-  flex-shrink: 0;
-}
-
-/* ─── TOAST ─── */
-#toast {
-  position: fixed;
-  bottom: 20px; left: 50%; transform: translateX(-50%) translateY(20px);
-  background: var(--surface2);
-  border: 1px solid var(--border);
-  border-radius: 20px;
-  padding: 10px 18px;
-  font-family: 'Space Mono', monospace;
-  font-size: 11px;
-  color: var(--text);
-  white-space: nowrap;
-  z-index: 200;
-  opacity: 0;
-  transition: all 0.2s;
-  pointer-events: none;
-}
-#toast.show {
-  opacity: 1;
-  transform: translateX(-50%) translateY(0);
-}
+/* TOAST */
+#toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--surface2);border:1px solid var(--border);border-radius:20px;padding:10px 18px;font-family:'Space Mono',monospace;font-size:11px;color:var(--text);white-space:nowrap;z-index:200;opacity:0;transition:all .2s;pointer-events:none}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
-
 <div id="app">
-  <!-- HEADER -->
-  <div class="header">
-    <div class="header-top">
+  <div class="hdr">
+    <div class="hdr-top">
       <div class="brand">LEGIT<span> / Staff</span></div>
-      <div class="header-actions">
-        <div class="icon-btn" id="refresh-btn" onclick="refreshMenu()" title="Check for updates">
+      <div class="hdr-actions">
+        <div class="icon-btn" id="refresh-btn" onclick="refreshMenu()" title="Check for new products">
           <span id="refresh-icon">🔄</span>
           <div class="badge" id="new-badge"></div>
         </div>
-        <div class="icon-btn" onclick="exportPDF()" title="Export strain reference PDF">📄</div>
-      <div class="icon-btn" onclick="openSettings()">⚙️</div>
+        <div class="icon-btn" onclick="exportPDF()" title="Export PDF">📄</div>
+        <div class="icon-btn" onclick="openSettings()">⚙️</div>
       </div>
     </div>
-    <div class="search-wrap">
-      <span class="search-icon">🔍</span>
-      <input id="search" type="search" placeholder="Search strain, effect, brand…" autocomplete="off" autocorrect="off" spellcheck="false">
-      <span class="search-clear" id="search-clear" onclick="clearSearch()">×</span>
+    <div class="srch-wrap">
+      <span class="srch-icon">🔍</span>
+      <input id="search" type="search" placeholder="Search strain, effect, brand…" autocomplete="off" spellcheck="false">
+      <span class="srch-x" id="srch-x" onclick="clearSearch()">×</span>
     </div>
   </div>
 
-  <!-- FILTERS -->
-  <div class="filter-bar" id="filter-bar">
-    <div class="pill active-all" data-filter="cat:all" onclick="setFilter('cat','all',this)">All</div>
-    <div class="pill" data-filter="cat:flower" onclick="setFilter('cat','flower',this)">🌿 Flower</div>
-    <div class="pill" data-filter="cat:preroll" onclick="setFilter('cat','preroll',this)">🚬 Pre-Roll</div>
-    <div class="pill" data-filter="cat:vape" onclick="setFilter('cat','vape',this)">💨 Vape</div>
-    <div class="pill" data-filter="cat:edible" onclick="setFilter('cat','edible',this)">🍬 Edible</div>
-    <div class="pill-divider"></div>
-    <div class="pill" data-filter="type:indica" onclick="setFilter('type','indica',this)">Indica</div>
-    <div class="pill" data-filter="type:sativa" onclick="setFilter('type','sativa',this)">Sativa</div>
-    <div class="pill" data-filter="type:hybrid" onclick="setFilter('type','hybrid',this)">Hybrid</div>
+  <div class="filters">
+    <div class="pill p-all on"  onclick="setCat('all',this)">All</div>
+    <div class="pill p-flower"  onclick="setCat('flower',this)">🌿 Flower</div>
+    <div class="pill p-preroll" onclick="setCat('preroll',this)">🚬 Pre-Roll</div>
+    <div class="pill p-vape"    onclick="setCat('vape',this)">💨 Vape</div>
+    <div class="pill p-edible"  onclick="setCat('edible',this)">🍬 Edible</div>
+    <div class="pill-sep"></div>
+    <div class="pill p-indica"  onclick="setType('indica',this)">Indica</div>
+    <div class="pill p-sativa"  onclick="setType('sativa',this)">Sativa</div>
+    <div class="pill p-hybrid"  onclick="setType('hybrid',this)">Hybrid</div>
   </div>
 
-  <!-- PRODUCT LIST -->
-  <div id="product-list"></div>
+  <div id="list"></div>
 </div>
 
-<!-- DRAWER OVERLAY -->
-<div id="drawer-overlay" onclick="closeDrawer()"></div>
-
-<!-- PRODUCT DRAWER -->
-<div id="product-drawer">
-  <div class="drawer-handle"></div>
-  <div class="drawer-scroll" id="drawer-content"></div>
+<div id="overlay" onclick="closeDrawer()"></div>
+<div id="drawer">
+  <div class="d-handle"></div>
+  <div id="drawer-scroll"></div>
 </div>
 
-<!-- SETTINGS -->
-<div id="settings-overlay">
-  <div class="settings-header">
-    <div class="settings-back" onclick="closeSettings()">←</div>
-    <div class="settings-title">Settings</div>
+<div id="settings">
+  <div class="s-hdr">
+    <div class="s-back" onclick="closeSettings()">←</div>
+    <div class="s-title">Settings</div>
   </div>
-  <div class="settings-scroll">
-
-    <div class="settings-group">
-      <div class="settings-group-title">📋 Menu Updates</div>
-      <div class="settings-desc">
-        Pulls the latest products from the Legit Cannabis website and highlights anything new or removed since last check.
-      </div>
-      <button class="settings-btn btn-amber" onclick="refreshMenu(true)" id="refresh-menu-btn">🔄 Check for New Products</button>
-      <div id="refresh-status" class="settings-status" style="display:none"></div>
+  <div class="s-scroll">
+    <div class="s-group">
+      <div class="s-group-title">📋 Menu Updates</div>
+      <div class="s-desc">Pull latest products from the Legit Cannabis website and flag anything new.</div>
+      <button class="s-btn btn-amber" onclick="refreshMenu(true)">🔄 Check for New Products</button>
+      <div id="refresh-status" class="s-status"></div>
     </div>
-
-    <div class="settings-group">
-      <div class="settings-group-title">🧠 Bulk Research</div>
-      <div class="settings-desc">
-        Auto-research all unresearched strains using Claude. Each call uses ~300 tokens. Runs one at a time.
-      </div>
-      <button class="settings-btn btn-green" onclick="bulkResearch()" id="bulk-btn">✨ Research All Unresearched</button>
-      <div id="bulk-status" class="settings-status" style="display:none"></div>
+    <div class="s-group">
+      <div class="s-group-title">🧠 Bulk Research</div>
+      <div class="s-desc">Auto-research all unresearched strains one at a time.</div>
+      <button class="s-btn btn-green" id="bulk-btn" onclick="bulkResearch()">✨ Research All Unresearched</button>
+      <div id="bulk-status" class="s-status"></div>
     </div>
-
-    <div class="settings-group">
-      <div class="settings-group-title">🗑 Data</div>
-      <div class="settings-desc">Clear stuck or errored research so strains can be re-researched.</div>
-      <button class="settings-btn btn-red" onclick="clearStuck()">🔧 Clear Stuck / Errored Research</button>
-      <button class="settings-btn btn-red" style="margin-top:6px;opacity:0.7" onclick="clearResearch()">Clear ALL Research Cache</button>
+    <div class="s-group">
+      <div class="s-group-title">🗑 Data</div>
+      <div class="s-desc">Fix strains stuck in a loading or error state.</div>
+      <button class="s-btn btn-red" onclick="clearStuck()">🔧 Clear Stuck / Errored</button>
+      <button class="s-btn btn-red" onclick="clearAll()" style="margin-top:6px;opacity:.7">Clear All Research</button>
     </div>
-
-    <div class="settings-group">
-      <div class="settings-group-title">ℹ️ About</div>
-      <div class="settings-desc">
-        Legit Cannabis Staff Tool · v1.0<br>
-        South Metro · Rosemount, MN<br><br>
-        Strain info sourced via Claude AI with web search. Always verify THC % and availability with the POS.
-      </div>
-      <div id="last-updated-label" class="settings-status"></div>
+    <div class="s-group">
+      <div class="s-group-title">ℹ️ About</div>
+      <div class="s-desc">Legit Cannabis Staff Tool · South Metro · Rosemount, MN<br><br>Strain info via Claude AI. Always verify THC% and availability with POS.</div>
+      <div id="last-updated" class="s-status" style="display:block"></div>
     </div>
-
   </div>
 </div>
 
 <div id="toast"></div>
 
 <script>
-// ─────────────────────────────────────────
-// INITIAL PRODUCT DATA
-// ─────────────────────────────────────────
-const INITIAL_PRODUCTS = [
-  // FLOWER
-  { id: 'donny-burger', name: 'Donny Burger', brand: 'Campfire Cannabis', category: 'flower', type: 'indica', thc: 23.4, cbd: 0.07, size: '4g', price: 48 },
-  { id: 'mac-stomper', name: 'MAC Stomper', brand: 'Campfire Cannabis', category: 'flower', type: 'indica-dom', thc: 23.6, cbd: 0.05, size: '4g', price: 48 },
-  { id: 'purple-octane', name: 'Purple Octane', brand: 'Campfire Cannabis', category: 'flower', type: 'indica-dom', thc: 20.2, cbd: 0.04, size: '4g', price: 48 },
-  { id: 'permanent-marker', name: 'Permanent Marker', brand: 'Campfire Cannabis', category: 'flower', type: 'indica-dom', thc: 21.1, cbd: 0.05, size: '4g', price: 51 },
-  { id: 'lit-og-flower', name: 'LIT OG', brand: 'Campfire Cannabis', category: 'flower', type: 'indica-dom', thc: null, cbd: null, size: '4g', price: 55 },
-  { id: 'blueberry-muffin-flower', name: 'Blueberry Muffin', brand: 'Grasslandz', category: 'flower', type: 'indica-dom', thc: 17.7, cbd: 0.07, size: '3.5g', price: 54 },
-  { id: 'face-on-fire', name: 'Face on Fire', brand: 'Grasslandz', category: 'flower', type: 'indica-dom', thc: 20.19, cbd: 0.03, size: '3.5g', price: 54 },
-  { id: 'runtz-flower', name: 'Runtz', brand: 'Campfire Cannabis', category: 'flower', type: 'hybrid', thc: 19.5, cbd: 0.06, size: '4g', price: 48 },
-  { id: 'cap-junky', name: 'Cap Junky', brand: 'Campfire Cannabis', category: 'flower', type: 'hybrid', thc: null, cbd: null, size: '4g', price: 55 },
-  { id: 'soap-flower', name: 'Soap', brand: 'Campfire Cannabis', category: 'flower', type: 'sativa-dom', thc: 21.8, cbd: 0.06, size: '4g', price: 51 },
-  { id: 'guava-flower', name: 'Guava', brand: 'Campfire Cannabis', category: 'flower', type: 'sativa-dom', thc: null, cbd: null, size: '4g', price: 48 },
-  { id: 'glue-31', name: 'Glue 31', brand: 'Grasslandz', category: 'flower', type: 'sativa-dom', thc: 22.28, cbd: 0.09, size: '3.5g', price: 54 },
-  // PRE-ROLLS
-  { id: 'lit-og-preroll', name: 'LIT OG', brand: 'Campfire Cannabis', category: 'preroll', type: 'indica-dom', thc: null, cbd: null, size: '1g', price: 18 },
-  { id: 'blueberry-muffin-preroll', name: 'Blueberry Muffin', brand: 'Grasslandz', category: 'preroll', type: 'indica-dom', thc: 17.7, cbd: 0.07, size: '1g', price: 16 },
-  // VAPES — DISPOSABLES
-  { id: 'romulan-disp', name: 'Romulan', brand: 'Nebula', category: 'vape', type: 'indica', thc: 79.34, cbd: 0.16, size: '1g', price: 70, subtype: 'Disposable' },
-  { id: 'northern-lights-disp', name: 'Northern Lights', brand: 'Grasslandz', category: 'vape', type: 'indica', thc: 82, cbd: 0.91, size: '1g', price: 70, subtype: 'Disposable' },
-  { id: 'og-kush-disp', name: 'OG Kush', brand: 'Grasslandz', category: 'vape', type: 'indica-dom', thc: 77.2, cbd: 0.79, size: '1g', price: 70, subtype: 'Disposable' },
-  { id: 'forbidden-fruit-disp', name: 'Forbidden Fruit', brand: 'True Canna', category: 'vape', type: 'indica-dom', thc: null, cbd: null, size: '1g', price: 70, subtype: 'Disposable' },
-  { id: 'insane-punch-disp', name: 'Insane Punch', brand: 'True Canna', category: 'vape', type: 'hybrid', thc: null, cbd: null, size: '1g', price: 70, subtype: 'Disposable' },
-  { id: 'green-crack-disp', name: 'Green Crack', brand: 'Grasslandz', category: 'vape', type: 'sativa-dom', thc: 76.5, cbd: 0.81, size: '1g', price: 70, subtype: 'Disposable' },
-  { id: 'super-lemon-haze-disp', name: 'Super Lemon Haze', brand: 'Grasslandz', category: 'vape', type: 'sativa-dom', thc: 77.3, cbd: 0.85, size: '1g', price: 70, subtype: 'Disposable' },
-  { id: 'durban-poison-disp', name: 'Durban Poison', brand: 'Grasslandz', category: 'vape', type: 'sativa', thc: 84.9, cbd: 0.84, size: '1g', price: 70, subtype: 'Disposable' },
-  { id: 'super-jack-disp', name: 'Super Jack', brand: 'True Canna', category: 'vape', type: 'sativa', thc: null, cbd: null, size: '1g', price: 70, subtype: 'Disposable' },
-  // VAPES — CARTS
-  { id: 'romulan-cart', name: 'Romulan', brand: 'Nebula', category: 'vape', type: 'indica', thc: 79.34, cbd: 0.16, size: '0.5g', price: 40, subtype: 'Cartridge' },
-  { id: 'northern-lights-cart', name: 'Northern Lights', brand: 'Grasslandz', category: 'vape', type: 'indica', thc: 77.97, cbd: 0.88, size: '1g', price: 65, subtype: 'Cartridge' },
-  { id: 'og-kush-cart', name: 'OG Kush', brand: 'Grasslandz', category: 'vape', type: 'indica-dom', thc: 79.54, cbd: 0.21, size: '1g', price: 65, subtype: 'Cartridge' },
-  { id: 'green-crack-cart', name: 'Green Crack', brand: 'Grasslandz', category: 'vape', type: 'sativa-dom', thc: 79.19, cbd: 0.21, size: '1g', price: 65, subtype: 'Cartridge' },
-  { id: 'super-lemon-haze-cart', name: 'Super Lemon Haze', brand: 'Grasslandz', category: 'vape', type: 'sativa-dom', thc: 80.2, cbd: 0.22, size: '1g', price: 65, subtype: 'Cartridge' },
-  { id: 'atf-cart', name: 'ATF (Alaskan Thunder Fuck)', brand: 'Nebula', category: 'vape', type: 'sativa', thc: 76.76, cbd: 0.16, size: '0.5g', price: 40, subtype: 'Cartridge' },
-  { id: 'durban-poison-cart', name: 'Durban Poison', brand: 'Grasslandz', category: 'vape', type: 'sativa', thc: 78.19, cbd: 0.36, size: '1g', price: 65, subtype: 'Cartridge' },
-  // EDIBLES (Low Dose Hemp THC)
-  { id: 'strawberry-gelato-gummy', name: 'Strawberry Gelato Gummy', brand: 'Bouncy Bites', category: 'edible', type: 'hybrid', thc: null, size: 'each', price: 14.99 },
-  { id: 'berry-dreamzzz-gummy', name: 'Berry Dreamzzz Gummy', brand: 'Bouncy Bites', category: 'edible', type: 'indica', thc: null, size: 'each', price: 14.99 },
-  { id: 'sour-apple-gummy', name: 'Sour Apple Gummy', brand: 'Bouncy Bites', category: 'edible', type: 'hybrid', thc: null, size: 'each', price: 14.99 },
-  { id: 'tangerine-sativa-gummy', name: 'Tangerine Gummy', brand: 'Country Cannabis', category: 'edible', type: 'sativa', thc: null, size: 'each', price: 9.99 },
-  { id: 'strawberry-sativa-gummy', name: 'Strawberry Gummy', brand: 'Country Cannabis', category: 'edible', type: 'sativa', thc: null, size: 'each', price: 9.99 },
-  { id: 'watermelon-indica-gummy', name: 'Watermelon Gummy', brand: 'Country Cannabis', category: 'edible', type: 'indica', thc: null, size: 'each', price: 9.99 },
-  { id: 'cherry-hybrid-gummy', name: 'Cherry Gummy', brand: 'Country Cannabis', category: 'edible', type: 'hybrid', thc: null, size: 'each', price: 9.99 },
-  { id: 'grape-indica-gummy', name: 'Grape Gummy', brand: 'Country Cannabis', category: 'edible', type: 'indica', thc: null, size: 'each', price: 9.99 },
-  { id: 'cbn-sleep-blueberry', name: 'CBN Sleep Gummies – Blueberry', brand: 'Country Cannabis', category: 'edible', type: 'indica', thc: null, size: 'each', price: 9.99 },
-  { id: 'cbn-sleep-tangerine', name: 'CBN Sleep Gummies – Tangerine', brand: 'Country Cannabis', category: 'edible', type: 'indica', thc: null, size: 'each', price: 9.99 },
-  { id: 'sasquatch-caramels', name: 'Sasquatch Caramels', brand: 'Country Cannabis', category: 'edible', type: null, thc: null, size: 'each', price: 14.99 },
-  { id: 'assorted-indica-blowfish', name: 'Assorted Indica Gummy', brand: 'Blowfish', category: 'edible', type: 'indica', thc: null, size: 'each', price: 18.99 },
-  { id: 'blue-razz-indica-blowfish', name: 'Blue Raspberry Indica Gummy', brand: 'Blowfish', category: 'edible', type: 'indica', thc: null, size: 'each', price: 18.99 },
-  { id: 'strawberry-indica-blowfish', name: 'Strawberry Indica Gummy', brand: 'Blowfish', category: 'edible', type: 'indica', thc: null, size: 'each', price: 18.99 },
-  { id: 'grape-indica-blowfish', name: 'Grape Indica Gummy', brand: 'Blowfish', category: 'edible', type: 'indica', thc: null, size: 'each', price: 18.99 },
-  { id: 'green-apple-indica-blowfish', name: 'Green Apple Indica Gummy', brand: 'Blowfish', category: 'edible', type: 'indica', thc: null, size: 'each', price: 18.99 },
-  { id: 'highbernate-gummy', name: 'HIGHBERNATE Gummy', brand: 'Minny Grown', category: 'edible', type: null, thc: null, size: 'each', price: 24.99 },
-  { id: 'caramel-apple-alien', name: 'Caramel Apple Alien Abduction Gummy', brand: 'Minny Grown', category: 'edible', type: null, thc: null, size: 'each', price: 24.99 },
-  { id: 'so-superior-clementine', name: 'So Superior Clementine Gummy', brand: 'Minny Grown', category: 'edible', type: null, thc: null, size: 'each', price: 24.99 },
-  { id: 'sky-high-watermelon', name: 'Sky High Watermelon Gummy', brand: 'Minny Grown', category: 'edible', type: null, thc: null, size: 'each', price: 24.99 },
-  { id: 'cabin-colada-gummy', name: 'Cabin Colada Gummy', brand: 'Minny Grown', category: 'edible', type: null, thc: null, size: 'each', price: 24.99 },
-  { id: 'entourage-tropical-dream', name: 'Entourage – Tropical Dream Gummy', brand: 'MN Roots', category: 'edible', type: 'indica', thc: null, size: 'each', price: 23.99 },
-  { id: 'entourage-citrus-sour', name: 'Entourage – Citrus Sour Gummy', brand: 'MN Roots', category: 'edible', type: 'indica', thc: null, size: 'each', price: 23.99 },
-  { id: 'entourage-strawberry-punch', name: 'Entourage – Strawberry Punch Gummy', brand: 'MN Roots', category: 'edible', type: 'indica', thc: null, size: 'each', price: 23.99 },
-  { id: 'peach-passion-gummy', name: 'Peach Passion Gummy', brand: 'MN Roots', category: 'edible', type: 'indica', thc: null, size: 'each', price: 19.99 },
-  { id: 'berry-lemon-punch', name: 'Berry Lemon Punch Gummy', brand: 'MN Roots', category: 'edible', type: 'indica', thc: null, size: 'each', price: 19.99 },
-  { id: 'tropical-citrus-gummy', name: 'Tropical Citrus Gummy', brand: 'MN Roots', category: 'edible', type: 'indica', thc: null, size: 'each', price: 19.99 },
-  { id: 'dragonfruit-lemonade', name: 'Dragonfruit Lemonade Gummy', brand: 'MN Roots', category: 'edible', type: 'indica', thc: null, size: 'each', price: 19.99 },
-  { id: 'mn-roots-caramels', name: 'Caramels', brand: 'MN Roots', category: 'edible', type: null, thc: null, size: 'each', price: 24.99 },
-  { id: 'apple-caramels', name: 'Apple Caramels', brand: 'MN Roots', category: 'edible', type: null, thc: null, size: 'each', price: 24.99 },
-  { id: 'elevated-fun-citrus', name: 'Elevated Fun Big Bang Citrus Gummy', brand: 'CC Co.', category: 'edible', type: 'sativa', thc: null, size: 'each', price: 23.99 },
-  { id: 'elevated-fun-blueberry', name: 'Elevated Fun Blueberry Blastoff Gummy', brand: 'CC Co.', category: 'edible', type: 'sativa', thc: null, size: 'each', price: 23.99 },
-];
+// ─── CONFIG ───────────────────────────────────────────────────────────────────
+const API = 'https://legit-buddy-api.onrender.com';
 
-const MENU_PAGES = [
-  'https://shop.mnlegitcannabis.com/south-metro/menu',
-  'https://shop.mnlegitcannabis.com/south-metro/menu?page=2',
-  'https://shop.mnlegitcannabis.com/south-metro/menu?page=3',
-];
-
-// ─────────────────────────────────────────
-// STATE & STORAGE
-// ─────────────────────────────────────────
-const S = {
-  get: k => { try { return JSON.parse(localStorage.getItem('legit_' + k)); } catch { return null; } },
-  set: (k, v) => localStorage.setItem('legit_' + k, JSON.stringify(v)),
+// ─── STORAGE ──────────────────────────────────────────────────────────────────
+const LS = {
+  get: k => { try { return JSON.parse(localStorage.getItem('lb_'+k)); } catch { return null; } },
+  set: (k,v) => { try { localStorage.setItem('lb_'+k, JSON.stringify(v)); } catch {} },
 };
 
-let state = {
-  products: S.get('products') || INITIAL_PRODUCTS,
-  research: S.get('research') || {},
-  catFilter: 'all',
-  typeFilter: 'all',
-  query: '',
-  selected: null,
-  lastUpdated: S.get('lastUpdated') || null,
-};
+// ─── PRODUCTS ─────────────────────────────────────────────────────────────────
+const DEFAULT_PRODUCTS = [
+  {id:'donny-burger',      name:'Donny Burger',               brand:'Campfire Cannabis', cat:'flower',  type:'indica',     thc:23.4,  cbd:0.07, size:'4g',   price:48},
+  {id:'mac-stomper',       name:'MAC Stomper',                brand:'Campfire Cannabis', cat:'flower',  type:'indica-dom', thc:23.6,  cbd:0.05, size:'4g',   price:48},
+  {id:'purple-octane',     name:'Purple Octane',              brand:'Campfire Cannabis', cat:'flower',  type:'indica-dom', thc:20.2,  cbd:0.04, size:'4g',   price:48},
+  {id:'permanent-marker',  name:'Permanent Marker',           brand:'Campfire Cannabis', cat:'flower',  type:'indica-dom', thc:21.1,  cbd:0.05, size:'4g',   price:51},
+  {id:'lit-og-flower',     name:'LIT OG',                     brand:'Campfire Cannabis', cat:'flower',  type:'indica-dom', thc:null,  cbd:null, size:'4g',   price:55},
+  {id:'blueberry-muffin',  name:'Blueberry Muffin',           brand:'Grasslandz',        cat:'flower',  type:'indica-dom', thc:17.7,  cbd:0.07, size:'3.5g', price:54},
+  {id:'face-on-fire',      name:'Face on Fire',               brand:'Grasslandz',        cat:'flower',  type:'indica-dom', thc:20.19, cbd:0.03, size:'3.5g', price:54},
+  {id:'runtz',             name:'Runtz',                      brand:'Campfire Cannabis', cat:'flower',  type:'hybrid',     thc:19.5,  cbd:0.06, size:'4g',   price:48},
+  {id:'cap-junky',         name:'Cap Junky',                  brand:'Campfire Cannabis', cat:'flower',  type:'hybrid',     thc:null,  cbd:null, size:'4g',   price:55},
+  {id:'soap',              name:'Soap',                       brand:'Campfire Cannabis', cat:'flower',  type:'sativa-dom', thc:21.8,  cbd:0.06, size:'4g',   price:51},
+  {id:'guava',             name:'Guava',                      brand:'Campfire Cannabis', cat:'flower',  type:'sativa-dom', thc:null,  cbd:null, size:'4g',   price:48},
+  {id:'glue-31',           name:'Glue 31',                    brand:'Grasslandz',        cat:'flower',  type:'sativa-dom', thc:22.28, cbd:0.09, size:'3.5g', price:54},
+  {id:'lit-og-pr',         name:'LIT OG',                     brand:'Campfire Cannabis', cat:'preroll', type:'indica-dom', thc:null,  cbd:null, size:'1g',   price:18},
+  {id:'blueberry-muffin-pr',name:'Blueberry Muffin',          brand:'Grasslandz',        cat:'preroll', type:'indica-dom', thc:17.7,  cbd:0.07, size:'1g',   price:16},
+  {id:'romulan-disp',      name:'Romulan',                    brand:'Nebula',            cat:'vape',    type:'indica',     thc:79.34, cbd:0.16, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'romulan-cart',      name:'Romulan',                    brand:'Nebula',            cat:'vape',    type:'indica',     thc:79.34, cbd:0.16, size:'0.5g', price:40,  sub:'Cartridge'},
+  {id:'northern-lights-disp',name:'Northern Lights',          brand:'Grasslandz',        cat:'vape',    type:'indica',     thc:82,    cbd:0.91, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'northern-lights-cart',name:'Northern Lights',          brand:'Grasslandz',        cat:'vape',    type:'indica',     thc:77.97, cbd:0.88, size:'1g',   price:65,  sub:'Cartridge'},
+  {id:'og-kush-disp',      name:'OG Kush',                    brand:'Grasslandz',        cat:'vape',    type:'indica-dom', thc:77.2,  cbd:0.79, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'og-kush-cart',      name:'OG Kush',                    brand:'Grasslandz',        cat:'vape',    type:'indica-dom', thc:79.54, cbd:0.21, size:'1g',   price:65,  sub:'Cartridge'},
+  {id:'forbidden-fruit',   name:'Forbidden Fruit',            brand:'True Canna',        cat:'vape',    type:'indica-dom', thc:null,  cbd:null, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'insane-punch',      name:'Insane Punch',               brand:'True Canna',        cat:'vape',    type:'hybrid',     thc:null,  cbd:null, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'green-crack-disp',  name:'Green Crack',                brand:'Grasslandz',        cat:'vape',    type:'sativa-dom', thc:76.5,  cbd:0.81, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'green-crack-cart',  name:'Green Crack',                brand:'Grasslandz',        cat:'vape',    type:'sativa-dom', thc:79.19, cbd:0.21, size:'1g',   price:65,  sub:'Cartridge'},
+  {id:'slh-disp',          name:'Super Lemon Haze',           brand:'Grasslandz',        cat:'vape',    type:'sativa-dom', thc:77.3,  cbd:0.85, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'slh-cart',          name:'Super Lemon Haze',           brand:'Grasslandz',        cat:'vape',    type:'sativa-dom', thc:80.2,  cbd:0.22, size:'1g',   price:65,  sub:'Cartridge'},
+  {id:'durban-disp',       name:'Durban Poison',              brand:'Grasslandz',        cat:'vape',    type:'sativa',     thc:84.9,  cbd:0.84, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'durban-cart',       name:'Durban Poison',              brand:'Grasslandz',        cat:'vape',    type:'sativa',     thc:78.19, cbd:0.36, size:'1g',   price:65,  sub:'Cartridge'},
+  {id:'super-jack',        name:'Super Jack',                 brand:'True Canna',        cat:'vape',    type:'sativa',     thc:null,  cbd:null, size:'1g',   price:70,  sub:'Disposable'},
+  {id:'atf',               name:'ATF (Alaskan Thunder Fuck)', brand:'Nebula',            cat:'vape',    type:'sativa',     thc:76.76, cbd:0.16, size:'0.5g', price:40,  sub:'Cartridge'},
+];
 
-// ─────────────────────────────────────────
-// FILTER LOGIC
-// ─────────────────────────────────────────
-function getFiltered() {
-  const q = state.query.toLowerCase().trim();
-  return state.products.filter(p => {
-    if (state.catFilter !== 'all' && p.category !== state.catFilter) return false;
-    if (state.typeFilter !== 'all') {
+// ─── STATE ────────────────────────────────────────────────────────────────────
+let products  = LS.get('products')  || DEFAULT_PRODUCTS;
+let research  = LS.get('research')  || {};
+let catFilter = 'all';
+let typeFilter = 'all';
+let query     = '';
+let openId    = null;
+
+// ─── TYPE LABELS ──────────────────────────────────────────────────────────────
+const TYPE_LBL = {
+  'indica':'Indica','indica-dom':'Indica Dominant',
+  'hybrid':'Hybrid','sativa-dom':'Sativa Dominant','sativa':'Sativa'
+};
+const CAT_LBL = {flower:'🌿 Flower',preroll:'🚬 Pre-Roll',vape:'💨 Vape',edible:'🍬 Edible'};
+
+// ─── FILTER ───────────────────────────────────────────────────────────────────
+function filtered() {
+  const q = query.toLowerCase().trim();
+  return products.filter(p => {
+    if (catFilter !== 'all' && p.cat !== catFilter) return false;
+    if (typeFilter !== 'all') {
       const t = p.type || '';
-      if (state.typeFilter === 'indica' && !t.includes('indica')) return false;
-      if (state.typeFilter === 'sativa' && !t.includes('sativa')) return false;
-      if (state.typeFilter === 'hybrid' && t !== 'hybrid') return false;
+      if (typeFilter === 'indica' && !t.includes('indica')) return false;
+      if (typeFilter === 'sativa' && !t.includes('sativa')) return false;
+      if (typeFilter === 'hybrid' && t !== 'hybrid') return false;
     }
     if (!q) return true;
-    const research = state.research[p.id];
-    const effects = (research?.effects || []).join(' ').toLowerCase();
-    const flavors = (research?.flavors || []).join(' ').toLowerCase();
-    const terpenes = (research?.terpenes || []).join(' ').toLowerCase();
-    const best = (research?.bestFor || []).join(' ').toLowerCase();
-    return (
-      p.name.toLowerCase().includes(q) ||
-      p.brand.toLowerCase().includes(q) ||
-      (p.subtype || '').toLowerCase().includes(q) ||
-      effects.includes(q) ||
-      flavors.includes(q) ||
-      terpenes.includes(q) ||
-      best.includes(q)
-    );
+    const r = research[p.id] || {};
+    const blob = [
+      p.name, p.brand, p.sub||'',
+      ...(r.effects||[]), ...(r.therapeutic||[]), ...(r.flavors||[]),
+      ...(r.aroma||[]), ...(r.terpenes||[]), ...(r.bestFor||[]),
+      r.lineage||'', r.misc||''
+    ].join(' ').toLowerCase();
+    return blob.includes(q);
   });
 }
 
-// ─────────────────────────────────────────
-// RENDER
-// ─────────────────────────────────────────
+// ─── RENDER LIST ──────────────────────────────────────────────────────────────
 function render() {
-  const list = document.getElementById('product-list');
-  const filtered = getFiltered();
-
-  if (filtered.length === 0) {
-    list.innerHTML = `<div class="empty-state">
-      <div class="emoji">🔍</div>
-      <p>No products match "${state.query || 'this filter'}"</p>
-    </div>`;
+  const el = document.getElementById('list');
+  const items = filtered();
+  if (!items.length) {
+    el.innerHTML = `<div class="empty"><div class="e-icon">🔍</div><p>No products match "${query||'this filter'}"</p></div>`;
     return;
   }
+  const order = ['flower','preroll','vape','edible'];
+  items.sort((a,b) => order.indexOf(a.cat)-order.indexOf(b.cat) || a.name.localeCompare(b.name));
 
-  const catOrder = ['flower', 'preroll', 'vape', 'edible'];
-  const sorted = [...filtered].sort((a, b) => {
-    const ci = catOrder.indexOf(a.category) - catOrder.indexOf(b.category);
-    if (ci !== 0) return ci;
-    return a.name.localeCompare(b.name);
-  });
-
-  const typeLabel = {
-    'indica': 'Indica', 'indica-dom': 'Indica Dom',
-    'sativa': 'Sativa', 'sativa-dom': 'Sativa Dom', 'hybrid': 'Hybrid'
-  };
-
-  let html = `<div class="list-meta">${filtered.length} product${filtered.length !== 1 ? 's' : ''}</div>`;
-
-  sorted.forEach(p => {
-    const researched = state.research[p.id]?.researched;
-    const thcDisplay = p.thc ? `${p.thc}%` : '—';
-    const thcClass = p.thc ? (p.category === 'vape' ? 'green' : '') : 'no-thc';
-    const dotClass = p.type ? `dot-${p.type}` : '';
-    const subtypeStr = p.subtype ? ` · ${p.subtype}` : '';
-
-    html += `<div class="product-card" onclick="openProduct('${p.id}')">
-      <div class="card-type-bar bar-${p.category}"></div>
-      <div class="card-main">
-        <div class="card-name">${p.name}</div>
-        <div class="card-sub">
-          <span class="card-brand">${p.brand}${subtypeStr}</span>
-          ${p.type ? `<span class="type-dot ${dotClass}"></span><span>${typeLabel[p.type] || p.type}</span>` : ''}
-          ${researched ? '<span class="card-researched" title="Research available"></span>' : ''}
+  el.innerHTML = `<div class="list-meta">${items.length} product${items.length!==1?'s':''}</div>` +
+    items.map(p => {
+      const r = research[p.id];
+      const done = r?.researched;
+      const thcStr = p.thc ? p.thc+'%' : '—';
+      return `<div class="card" onclick="openProduct('${p.id}')">
+        <div class="cbar cbar-${p.cat}"></div>
+        <div class="cmain">
+          <div class="cname">${p.name}</div>
+          <div class="csub">
+            <span class="cbrand">${p.brand}${p.sub?' · '+p.sub:''}</span>
+            ${p.type?`<span class="tdot tdot-${p.type}"></span><span>${TYPE_LBL[p.type]||p.type}</span>`:''}
+            ${done?'<span class="cdot-researched" title="Researched"></span>':''}
+          </div>
         </div>
-      </div>
-      <div class="card-right">
-        <div class="card-thc ${thcClass}">${thcDisplay}</div>
-        <div class="card-price">$${p.price}</div>
-      </div>
-    </div>`;
-  });
-
-  list.innerHTML = html;
+        <div class="cright">
+          <div class="cthc ${p.thc?'':'na'}">${thcStr}</div>
+          <div class="cprice">$${p.price}</div>
+        </div>
+      </div>`;
+    }).join('');
 }
 
-// ─────────────────────────────────────────
-// PRODUCT DRAWER
-// ─────────────────────────────────────────
+// ─── DRAWER ───────────────────────────────────────────────────────────────────
 function openProduct(id) {
-  const p = state.products.find(x => x.id === id);
-  if (!p) return;
-  state.selected = id;
-  renderDrawer(p);
-  document.getElementById('product-drawer').classList.add('open');
-  document.getElementById('drawer-overlay').classList.add('show');
+  openId = id;
+  renderDrawer();
+  document.getElementById('drawer').classList.add('open');
+  document.getElementById('overlay').classList.add('show');
 }
 
 function closeDrawer() {
-  document.getElementById('product-drawer').classList.remove('open');
-  document.getElementById('drawer-overlay').classList.remove('show');
-  state.selected = null;
+  document.getElementById('drawer').classList.remove('open');
+  document.getElementById('overlay').classList.remove('show');
+  openId = null;
 }
 
-function renderDrawer(p) {
-  const research = state.research[p.id];
-  const typeLabel = {
-    'indica': 'Indica', 'indica-dom': 'Indica Dom',
-    'sativa': 'Sativa', 'sativa-dom': 'Sativa Dom', 'hybrid': 'Hybrid'
-  };
-  const catLabel = { flower: '🌿 Flower', preroll: '🚬 Pre-Roll', vape: '💨 Vape', edible: '🍬 Edible' };
+function renderDrawer() {
+  if (!openId) return;
+  const p = products.find(x => x.id === openId);
+  if (!p) return;
+  const r = research[openId];
 
-  let statsHtml = `
-    <div class="stat-box">
-      <div class="stat-val amber">$${p.price}</div>
-      <div class="stat-label">Price</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-val">${p.size}</div>
-      <div class="stat-label">Size</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-val ${p.thc ? 'green' : ''}">${p.thc ? p.thc + '%' : '—'}</div>
-      <div class="stat-label">THC</div>
-    </div>
-    <div class="stat-box">
-      <div class="stat-val">${p.cbd != null ? p.cbd + '%' : '—'}</div>
-      <div class="stat-label">CBD</div>
-    </div>
-  `;
+  const stats = `
+    <div class="stat"><div class="stat-val a">$${p.price}</div><div class="stat-lbl">Price</div></div>
+    <div class="stat"><div class="stat-val">${p.size}</div><div class="stat-lbl">Size</div></div>
+    <div class="stat"><div class="stat-val ${p.thc?'g':''}">${p.thc?p.thc+'%':'—'}</div><div class="stat-lbl">THC</div></div>
+    <div class="stat"><div class="stat-val">${p.cbd!=null?p.cbd+'%':'—'}</div><div class="stat-lbl">CBD</div></div>`;
 
-  let researchHtml = '';
-  if (research?.loading) {
-    researchHtml = `<div class="research-btn loading"><span class="spinner"></span> Researching…</div>`;
-  } else if (research?.error) {
-    researchHtml = `
-      <div class="r-error">${research.error}</div>
-      <button class="research-btn" style="margin-top:10px" onclick="researchStrain('${p.id}')">🔄 Try Again</button>
-    `;
-  } else if (research?.researched) {
-    const ts = research.timestamp ? new Date(research.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
-    const tags = (arr, cls) => arr?.length ? arr.map(t => `<span class="r-tag ${cls}">${t}</span>`).join('') : '';
-    researchHtml = `
-      <div class="research-label"><span class="dot-live"></span> Strain Intel</div>
-      <div class="research-results">
-
-        ${research.description ? `
-          <div class="r-block">
-            <div class="r-block-title">Overview</div>
-            <div class="r-block-text">${research.description}</div>
-          </div>` : ''}
-
-        ${research.lineage ? `
-          <div class="r-block">
-            <div class="r-block-title">Lineage</div>
-            <div class="r-lineage">${research.lineage}</div>
-          </div>` : ''}
-
-        ${research.effects?.length ? `
-          <div class="r-block">
-            <div class="r-block-title">Effects</div>
-            <div class="r-tags">${tags(research.effects, 'effect')}</div>
-          </div>` : ''}
-
-        ${research.therapeutic?.length ? `
-          <div class="r-block">
-            <div class="r-block-title">Therapeutic</div>
-            <div class="r-tags">${tags(research.therapeutic, 'therapeutic')}</div>
-          </div>` : ''}
-
-        ${research.negatives?.length ? `
-          <div class="r-block">
-            <div class="r-block-title">Negatives</div>
-            <div class="r-tags">${tags(research.negatives, 'negative')}</div>
-          </div>` : ''}
-
-        ${research.terpenes?.length ? `
-          <div class="r-block">
-            <div class="r-block-title">Terpenes</div>
-            <div class="r-tags">${tags(research.terpenes, 'terpene')}</div>
-          </div>` : ''}
-
-        ${research.flavors?.length ? `
-          <div class="r-block">
-            <div class="r-block-title">Flavors</div>
-            <div class="r-tags">${tags(research.flavors, 'flavor')}</div>
-          </div>` : ''}
-
-        ${research.aroma?.length ? `
-          <div class="r-block">
-            <div class="r-block-title">Aroma</div>
-            <div class="r-tags">${tags(research.aroma, 'aroma')}</div>
-          </div>` : ''}
-
-        ${research.bestFor?.length ? `
-          <div class="r-block">
-            <div class="r-block-title">Best For</div>
-            <div class="r-tags">${tags(research.bestFor, 'best')}</div>
-          </div>` : ''}
-
-        ${research.misc ? `
-          <div class="r-block">
-            <div class="r-block-title">Budtender Notes</div>
-            <div class="r-block-text" style="font-style:italic;opacity:0.8">${research.misc}</div>
-          </div>` : ''}
-
-        ${ts ? `<div class="r-timestamp">Researched ${ts}</div>` : ''}
-      </div>
-      <button class="research-btn" style="margin-top:16px;opacity:0.5;font-size:10px" onclick="researchStrain('${p.id}')">🔄 Re-research</button>
-    `;
-  } else {
-    researchHtml = `<button class="research-btn" id="research-trigger" onclick="researchStrain('${p.id}')">✨ Research This Strain</button>`;
+  let resHtml = '';
+  if (!r) {
+    resHtml = `<button class="r-btn" onclick="doResearch('${p.id}')">✨ Research This Strain</button>`;
+  } else if (r.loading) {
+    resHtml = `<div class="r-btn loading"><span class="spinner"></span> Researching…</div>`;
+  } else if (r.error) {
+    resHtml = `<div class="r-error">${r.error}</div>
+      <button class="r-btn" style="margin-top:10px" onclick="doResearch('${p.id}')">🔄 Try Again</button>`;
+  } else if (r.researched) {
+    const ts = r.ts ? new Date(r.ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'}) : '';
+    const tags = (arr, cls) => arr?.length ? `<div class="r-tags">${arr.map(t=>`<span class="r-tag ${cls}">${t}</span>`).join('')}</div>` : '';
+    resHtml = `
+      <div class="r-label"><span class="r-dot"></span> Strain Intel</div>
+      ${r.description ? `<div class="r-block"><div class="r-block-title">Overview</div><div class="r-block-text">${r.description}</div></div>` : ''}
+      ${r.lineage     ? `<div class="r-block"><div class="r-block-title">Lineage</div><div class="r-lineage">${r.lineage}</div></div>` : ''}
+      ${r.effects?.length     ? `<div class="r-block"><div class="r-block-title">Effects</div>${tags(r.effects,'effect')}</div>` : ''}
+      ${r.therapeutic?.length ? `<div class="r-block"><div class="r-block-title">Therapeutic</div>${tags(r.therapeutic,'therapeutic')}</div>` : ''}
+      ${r.negatives?.length   ? `<div class="r-block"><div class="r-block-title">Negatives</div>${tags(r.negatives,'negative')}</div>` : ''}
+      ${r.terpenes?.length    ? `<div class="r-block"><div class="r-block-title">Terpenes</div>${tags(r.terpenes,'terpene')}</div>` : ''}
+      ${r.flavors?.length     ? `<div class="r-block"><div class="r-block-title">Flavors</div>${tags(r.flavors,'flavor')}</div>` : ''}
+      ${r.aroma?.length       ? `<div class="r-block"><div class="r-block-title">Aroma</div>${tags(r.aroma,'aroma')}</div>` : ''}
+      ${r.bestFor?.length     ? `<div class="r-block"><div class="r-block-title">Best For</div>${tags(r.bestFor,'best')}</div>` : ''}
+      ${r.misc ? `<div class="r-block"><div class="r-block-title">Budtender Notes</div><div class="r-block-text italic">${r.misc}</div></div>` : ''}
+      ${ts ? `<div class="r-ts">Researched ${ts}</div>` : ''}
+      <button class="r-rerun" onclick="doResearch('${p.id}')">🔄 Re-research</button>`;
   }
 
-  document.getElementById('drawer-content').innerHTML = `
-    <div class="drawer-header">
-      <div class="drawer-name">${p.name}</div>
-      <div class="drawer-close" onclick="closeDrawer()">×</div>
+  document.getElementById('drawer-scroll').innerHTML = `
+    <div class="d-hdr">
+      <div class="d-name">${p.name}</div>
+      <div class="d-close" onclick="closeDrawer()">×</div>
     </div>
-    <div class="drawer-brand">${p.brand} · ${catLabel[p.category] || p.category}${p.subtype ? ' · ' + p.subtype : ''}</div>
-    ${p.type ? `<div class="type-badge badge-${p.type}">${typeLabel[p.type] || p.type}</div>` : ''}
-    <div class="drawer-stats">${statsHtml}</div>
-    <div class="research-section">${researchHtml}</div>
-  `;
+    <div class="d-brand">${p.brand} · ${CAT_LBL[p.cat]||p.cat}${p.sub?' · '+p.sub:''}</div>
+    ${p.type ? `<div class="tbadge tb-${p.type}">${TYPE_LBL[p.type]||p.type}</div>` : ''}
+    <div class="d-stats">${stats}</div>
+    <div class="r-section">${resHtml}</div>`;
 }
 
-// ─────────────────────────────────────────
-// STRAIN RESEARCH (Claude API)
-// ─────────────────────────────────────────
-const API_PROXY = 'https://legit-buddy-api.onrender.com/api/claude';
-
-async function researchStrain(id) {
-  const p = state.products.find(x => x.id === id);
+// ─── RESEARCH ─────────────────────────────────────────────────────────────────
+async function doResearch(id) {
+  const p = products.find(x => x.id === id);
   if (!p) return;
 
-  state.research[id] = { loading: true };
-  S.set('research', state.research);
-  if (state.selected === id) renderDrawer(p);
+  research[id] = { loading: true };
+  LS.set('research', research);
+  if (openId === id) renderDrawer();
 
-  const isConcentrate = p.category === 'vape';
-  const prompt = `Cannabis ${isConcentrate ? 'concentrate/vape strain' : 'strain'}: "${p.name}"${p.thc ? `, ${p.thc}% THC` : ''}${p.type ? `, ${p.type}` : ''}. Brand: ${p.brand}. Provide full budtender-level strain intel. Respond ONLY with a JSON object, no markdown, no backticks:
+  const prompt = `Cannabis ${p.cat==='vape'?'vape/concentrate':'strain'}: "${p.name}"${p.thc?`, ${p.thc}% THC`:''}${p.type?`, ${p.type}`:''}, brand: ${p.brand}.
+Respond ONLY with valid JSON, no markdown:
 {
-  "lineage": "parent1 x parent2 (or unknown)",
-  "description": "2-3 sentence dispensary-style overview",
-  "effects": ["up to 5 psychoactive effects"],
+  "lineage": "parent1 x parent2",
+  "description": "2-3 sentence dispensary overview",
+  "effects": ["up to 5 effects"],
   "therapeutic": ["3-5 medical or wellness uses"],
-  "negatives": ["2-4 common side effects like dry mouth, anxiety, etc"],
+  "negatives": ["2-4 common side effects"],
   "terpenes": ["top 3 terpenes"],
   "flavors": ["top 3 flavor notes"],
   "aroma": ["top 3 scent descriptors"],
-  "bestFor": ["2-3 use cases like Evening relaxation, Creative work, Sleep"],
-  "misc": "1-2 sentences of interesting budtender notes about history, growing traits, or who it is best for"
+  "bestFor": ["2-3 use cases"],
+  "misc": "1-2 sentences of budtender notes"
 }`;
 
   try {
-    const res = await fetch(API_PROXY, {
+    const res = await fetch(`${API}/api/claude`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
-        max_tokens: 600,
-        system: 'You are a cannabis strain expert for a licensed Minnesota dispensary. Respond ONLY with valid JSON, no explanation, no markdown fences.',
+        max_tokens: 700,
+        system: 'You are a cannabis strain expert. Respond ONLY with valid JSON. No explanation, no markdown.',
         messages: [{ role: 'user', content: prompt }]
       })
     });
-
-    if (!res.ok) {
-      const err = await res.json();
-      throw new Error(err.error?.message || `API error ${res.status}`);
-    }
-
+    if (!res.ok) throw new Error(`API error ${res.status}`);
     const data = await res.json();
-    const raw = data.content?.find(b => b.type === 'text')?.text || '{}';
-    const clean = raw.replace(/```json|```/g, '').trim();
-    const parsed = JSON.parse(clean);
-
-    state.research[id] = { ...parsed, researched: true, loading: false, timestamp: Date.now() };
-    S.set('research', state.research);
+    if (data.error) throw new Error(data.error.message || 'API error');
+    const raw = data.content?.find(b => b.type==='text')?.text || '{}';
+    const parsed = JSON.parse(raw.replace(/```json|```/g,'').trim());
+    research[id] = { ...parsed, researched: true, loading: false, ts: Date.now() };
+    LS.set('research', research);
     render();
-    if (state.selected === id) renderDrawer(p);
+    if (openId === id) renderDrawer();
     toast(`✨ ${p.name} researched`);
-  } catch (err) {
-    state.research[id] = { loading: false, error: `${err.message}` };
-    S.set('research', state.research);
-    if (state.selected === id) renderDrawer(p);
-    toast('Research failed — try again');
+  } catch(e) {
+    research[id] = { loading: false, error: e.message, researched: false };
+    LS.set('research', research);
+    if (openId === id) renderDrawer();
+    toast('Research failed: ' + e.message);
   }
 }
 
-// ─────────────────────────────────────────
-// BULK RESEARCH
-// ─────────────────────────────────────────
+// ─── BULK RESEARCH ────────────────────────────────────────────────────────────
 let bulkRunning = false;
 async function bulkResearch() {
   if (bulkRunning) return;
-
-  const unresearched = state.products.filter(p =>
-    p.category !== 'edible' && !state.research[p.id]?.researched
-  );
-
-  if (unresearched.length === 0) {
-    document.getElementById('bulk-status').style.display = 'block';
-    document.getElementById('bulk-status').textContent = '✓ All strains already researched';
-    document.getElementById('bulk-status').className = 'settings-status success';
-    return;
-  }
-
+  const pending = products.filter(p => p.cat !== 'edible' && !research[p.id]?.researched);
+  if (!pending.length) { toast('All strains already researched ✓'); return; }
   bulkRunning = true;
   const btn = document.getElementById('bulk-btn');
+  const st  = document.getElementById('bulk-status');
   btn.disabled = true;
-  const statusEl = document.getElementById('bulk-status');
-  statusEl.style.display = 'block';
-  statusEl.className = 'settings-status';
-
-  for (let i = 0; i < unresearched.length; i++) {
-    const p = unresearched[i];
-    statusEl.textContent = `Researching ${i + 1}/${unresearched.length}: ${p.name}…`;
-    await researchStrain(p.id);
-    await new Promise(r => setTimeout(r, 500)); // small delay between calls
+  st.style.display = 'block'; st.className = 's-status';
+  for (let i = 0; i < pending.length; i++) {
+    st.textContent = `Researching ${i+1}/${pending.length}: ${pending[i].name}…`;
+    await doResearch(pending[i].id);
+    await new Promise(r => setTimeout(r, 600));
   }
-
   bulkRunning = false;
   btn.disabled = false;
-  statusEl.className = 'settings-status success';
-  statusEl.textContent = `✓ Done! Researched ${unresearched.length} strain${unresearched.length !== 1 ? 's' : ''}`;
+  st.className = 's-status ok';
+  st.textContent = `✓ Done — ${pending.length} strain${pending.length!==1?'s':''} researched`;
 }
 
-// ─────────────────────────────────────────
-// MENU REFRESH
-// ─────────────────────────────────────────
+// ─── MENU REFRESH ─────────────────────────────────────────────────────────────
 let refreshing = false;
-async function refreshMenu(fromSettings = false) {
+async function refreshMenu(fromSettings=false) {
   if (refreshing) return;
   refreshing = true;
-
-  const refreshIcon = document.getElementById('refresh-icon');
-  if (refreshIcon) refreshIcon.textContent = '⏳';
-
-  const statusEl = fromSettings ? document.getElementById('refresh-status') : null;
-  if (statusEl) { statusEl.style.display = 'block'; statusEl.className = 'settings-status'; statusEl.textContent = 'Fetching menu from site…'; }
+  document.getElementById('refresh-icon').textContent = '⏳';
+  const st = fromSettings ? document.getElementById('refresh-status') : null;
+  if (st) { st.style.display='block'; st.className='s-status'; st.textContent='Fetching menu…'; }
 
   try {
-    const menuUrl = API_PROXY.replace('/api/claude', '/api/menu');
-    const res = await fetch(menuUrl);
+    const res = await fetch(`${API}/api/menu`);
     if (!res.ok) throw new Error(`Server error ${res.status}`);
     const json = await res.json();
-    const allRaw = (json.pages || []).join('\n');
+    const html = (json.pages||[]).join('\n');
+    const fetched = parseMenu(html);
+    if (!fetched.length) throw new Error('Could not parse menu');
 
-    const fetched = parseMenuHTML(allRaw);
+    const currentIds = new Set(products.map(p=>p.id));
+    const fetchedIds  = new Set(fetched.map(p=>p.id));
+    const added   = fetched.filter(p=>!currentIds.has(p.id));
+    const removed = products.filter(p=>!fetchedIds.has(p.id));
 
-    if (fetched.length === 0) {
-      throw new Error('Could not parse menu — site structure may have changed');
+    if (added.length || removed.length) {
+      products = [...products.filter(p=>fetchedIds.has(p.id)), ...added];
+      LS.set('products', products);
+      document.getElementById('new-badge').classList.add('show');
     }
 
-    const currentIds = new Set(state.products.map(p => p.id));
-    const fetchedIds  = new Set(fetched.map(p => p.id));
-
-    const newProducts     = fetched.filter(p => !currentIds.has(p.id));
-    const removedProducts = state.products.filter(p => !fetchedIds.has(p.id));
-
-    if (newProducts.length > 0 || removedProducts.length > 0) {
-      state.products = [
-        ...state.products.filter(p => fetchedIds.has(p.id)),
-        ...newProducts,
-      ];
-      S.set('products', state.products);
-      const badge = document.getElementById('new-badge');
-      if (badge) badge.classList.add('show');
-    }
-
-    state.lastUpdated = new Date().toISOString();
-    S.set('lastUpdated', state.lastUpdated);
-
-    const msg = newProducts.length === 0 && removedProducts.length === 0
-      ? `✓ Menu up to date (${fetched.length} products)`
-      : `✓ ${newProducts.length} new · ${removedProducts.length} removed`;
-
-    if (statusEl) { statusEl.className = 'settings-status success'; statusEl.textContent = msg; }
+    LS.set('lastUpdated', new Date().toISOString());
+    const msg = !added.length && !removed.length
+      ? `✓ Up to date (${fetched.length} products)`
+      : `✓ ${added.length} new · ${removed.length} removed`;
+    if (st) { st.className='s-status ok'; st.textContent=msg; }
     toast(msg);
     render();
-  } catch (err) {
-    const msg = `Refresh failed: ${err.message}`;
-    if (statusEl) { statusEl.className = 'settings-status error'; statusEl.textContent = msg; }
+  } catch(e) {
+    const msg = 'Refresh failed: ' + e.message;
+    if (st) { st.className='s-status err'; st.textContent=msg; }
     else toast(msg);
   }
-
-  if (refreshIcon) refreshIcon.textContent = '🔄';
+  document.getElementById('refresh-icon').textContent = '🔄';
   refreshing = false;
-  updateLastUpdatedLabel();
+  updateLastUpdated();
 }
 
-function parseMenuHTML(html) {
+function parseMenu(html) {
   try {
-    const parser = new DOMParser();
-    const doc = parser.parseFromString(html, 'text/html');
-    const products = [];
-    const seen = new Set();
-
-    const links = doc.querySelectorAll('a[href*="/south-metro/menu/"]');
-    links.forEach(link => {
-      const href = link.getAttribute('href') || '';
-      if (!href.includes('-5221') && !href.includes('-5684') &&
-          !href.includes('-5222') && !href.includes('-5415')) return;
-
-      const h2 = link.querySelector('h2');
-      if (!h2) return;
-      const name = h2.textContent.trim();
-      if (!name || seen.has(href)) return;
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const out = []; const seen = new Set();
+    doc.querySelectorAll('a[href*="/south-metro/menu/"]').forEach(a => {
+      const href = a.getAttribute('href')||'';
+      if (!href.match(/-(5221|5222|5684|5415)/) || seen.has(href)) return;
       seen.add(href);
-
-      // Determine category from URL
-      let category = 'flower';
-      if (href.includes('-5684')) category = 'vape';
-      else if (href.includes('-5222')) category = 'preroll';
-      else if (href.includes('-5415')) category = 'edible';
-
-      // Extract text nodes
-      const text = link.textContent;
-
-      // Brand from img alt
-      const img = link.querySelector('img');
-      const altText = img?.getAttribute('alt') || '';
-      const brand = altText.replace(name, '').trim() || 'Unknown';
-
-      // Type
-      let type = null;
-      const typeMatch = text.match(/\b(Indica Dominant|Sativa Dominant|Indica|Sativa|Hybrid)\b/i);
-      if (typeMatch) {
-        const t = typeMatch[1].toLowerCase().replace(' dominant', '-dom');
-        type = t;
-      }
-
-      // THC
-      let thc = null;
-      const thcMatch = text.match(/THC:\s*([\d.]+)%/i);
-      if (thcMatch) thc = parseFloat(thcMatch[1]);
-
-      // Price
-      let price = null;
-      const priceMatch = text.match(/\$([\d.]+)/);
-      if (priceMatch) price = parseFloat(priceMatch[1]);
-
-      // Size
-      let size = null;
-      const sizeMatch = text.match(/\b([\d.]+\s*g|each)\b/i);
-      if (sizeMatch) size = sizeMatch[1];
-
-      // Subtype for vapes
-      let subtype = null;
-      if (category === 'vape') {
-        if (href.includes('disposables') || name.toLowerCase().includes('disposable')) subtype = 'Disposable';
-        else if (href.includes('cartridges') || name.toLowerCase().includes('cartridge')) subtype = 'Cartridge';
-      }
-
-      // Generate stable ID
-      const rawName = name.toLowerCase().replace(/\s+(flower|pre-roll|vape cartridge|disposable vape|gummy)$/i, '').trim();
-      const id = (rawName + '-' + category + (subtype ? '-' + subtype.toLowerCase().charAt(0) : '')).replace(/[^a-z0-9]+/g, '-');
-
-      products.push({ id, name: name.replace(/ (Flower|Pre-Roll|Vape Cartridge|Disposable Vape|Gummy)$/i, '').trim(), brand, category, type, thc, price, size, subtype });
+      const h2 = a.querySelector('h2'); if (!h2) return;
+      const name = h2.textContent.trim().replace(/ (Flower|Pre-Roll|Vape Cartridge|Disposable Vape|Gummy)$/i,'').trim();
+      const text = a.textContent;
+      let cat = 'flower';
+      if (href.includes('-5684')) cat = 'vape';
+      else if (href.includes('-5222')) cat = 'preroll';
+      else if (href.includes('-5415')) cat = 'edible';
+      const brand = (a.querySelector('img')?.alt||'').replace(name,'').trim()||'Unknown';
+      const typeM = text.match(/\b(Indica Dominant|Sativa Dominant|Indica|Sativa|Hybrid)\b/i);
+      const type = typeM ? typeM[1].toLowerCase().replace(' dominant','-dom') : null;
+      const thcM = text.match(/THC:\s*([\d.]+)%/i);
+      const thc = thcM ? parseFloat(thcM[1]) : null;
+      const priceM = text.match(/\$([\d.]+)/);
+      const price = priceM ? parseFloat(priceM[1]) : null;
+      const sizeM = text.match(/\b([\d.]+\s*g|each)\b/i);
+      const size = sizeM ? sizeM[1] : null;
+      let sub = null;
+      if (cat==='vape') sub = href.includes('disposable')||name.toLowerCase().includes('disposable') ? 'Disposable' : 'Cartridge';
+      const id = (name.toLowerCase()+'-'+cat+(sub?'-'+sub.charAt(0).toLowerCase():'')).replace(/[^a-z0-9]+/g,'-');
+      out.push({id, name, brand, cat, type, thc, price, size, sub});
     });
-
-    return products;
-  } catch {
-    return [];
-  }
+    return out;
+  } catch { return []; }
 }
 
-// ─────────────────────────────────────────
-// SETTINGS
-// ─────────────────────────────────────────
-function openSettings() {
-  updateLastUpdatedLabel();
-  document.getElementById('settings-overlay').classList.add('open');
-}
-
-function closeSettings() {
-  document.getElementById('settings-overlay').classList.remove('open');
-}
-
-function clearResearch() {
-  if (!confirm('Clear all cached strain research?')) return;
-  state.research = {};
-  S.set('research', {});
-  render();
-  toast('Research cache cleared');
-}
-
-function clearStuck() {
-  let count = 0;
-  Object.keys(state.research).forEach(id => {
-    const r = state.research[id];
-    if (r.loading || r.error || !r.researched) {
-      delete state.research[id];
-      count++;
-    }
+// ─── FILTER CONTROLS ──────────────────────────────────────────────────────────
+function setCat(val, el) {
+  catFilter = val;
+  document.querySelectorAll('.filters .pill').forEach(p => {
+    const cls = [...p.classList].find(c=>c.startsWith('p-'));
+    if (cls) p.classList.toggle('on', cls === 'p-'+val);
   });
-  S.set('research', state.research);
-  render();
-  toast(count > 0 ? `✓ Cleared ${count} stuck strain${count !== 1 ? 's' : ''} — tap to re-research` : 'No stuck strains found');
-}
-
-function updateLastUpdatedLabel() {
-  const el = document.getElementById('last-updated-label');
-  if (el) {
-    if (state.lastUpdated) {
-      const d = new Date(state.lastUpdated);
-      el.textContent = `Menu last checked: ${d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} at ${d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}`;
-    } else {
-      el.textContent = 'Menu not yet refreshed from live site';
-    }
-  }
-}
-
-// ─────────────────────────────────────────
-// FILTERS & SEARCH
-// ─────────────────────────────────────────
-function setFilter(type, value, el) {
-  if (type === 'cat') {
-    state.catFilter = value;
-    document.querySelectorAll(`[data-filter^="cat:"]`).forEach(p => {
-      p.className = 'pill';
-    });
-    el.className = `pill active-${value}`;
-  } else {
-    if (state.typeFilter === value) {
-      state.typeFilter = 'all';
-      el.className = 'pill';
-    } else {
-      state.typeFilter = value;
-      document.querySelectorAll(`[data-filter^="type:"]`).forEach(p => p.className = 'pill');
-      el.className = `pill active-${value}`;
-    }
-  }
   render();
 }
-
+function setType(val, el) {
+  typeFilter = typeFilter === val ? 'all' : val;
+  document.querySelectorAll('.p-indica,.p-sativa,.p-hybrid').forEach(p => p.classList.remove('on'));
+  if (typeFilter !== 'all') el.classList.add('on');
+  render();
+}
 function clearSearch() {
   document.getElementById('search').value = '';
-  state.query = '';
-  document.getElementById('search-clear').classList.remove('show');
+  query = '';
+  document.getElementById('srch-x').classList.remove('show');
   render();
 }
 
-// ─────────────────────────────────────────
-// TOAST
-// ─────────────────────────────────────────
-let toastTimer;
+// ─── SETTINGS ─────────────────────────────────────────────────────────────────
+function openSettings()  { updateLastUpdated(); document.getElementById('settings').classList.add('open'); }
+function closeSettings() { document.getElementById('settings').classList.remove('open'); }
+
+function clearStuck() {
+  let n = 0;
+  Object.keys(research).forEach(id => {
+    const r = research[id];
+    if (r.loading || r.error || !r.researched) { delete research[id]; n++; }
+  });
+  LS.set('research', research);
+  render();
+  if (openId) renderDrawer();
+  toast(n ? `✓ Cleared ${n} stuck strain${n!==1?'s':''} — tap to re-research` : 'No stuck strains found');
+}
+function clearAll() {
+  if (!confirm('Clear ALL research data?')) return;
+  research = {};
+  LS.set('research', research);
+  render();
+  if (openId) renderDrawer();
+  toast('All research cleared');
+}
+function updateLastUpdated() {
+  const el = document.getElementById('last-updated');
+  if (!el) return;
+  const ts = LS.get('lastUpdated');
+  el.style.display = 'block';
+  el.textContent = ts
+    ? 'Menu last checked: ' + new Date(ts).toLocaleDateString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
+    : 'Menu not yet refreshed from live site';
+}
+
+// ─── TOAST ────────────────────────────────────────────────────────────────────
+let toastT;
 function toast(msg) {
   const el = document.getElementById('toast');
   el.textContent = msg;
   el.classList.add('show');
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => el.classList.remove('show'), 2800);
+  clearTimeout(toastT);
+  toastT = setTimeout(() => el.classList.remove('show'), 3000);
 }
 
-// ─────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────
-document.getElementById('search').addEventListener('input', e => {
-  state.query = e.target.value;
-  document.getElementById('search-clear').classList.toggle('show', !!e.target.value);
-  render();
-});
-
-// Swipe down to close drawer
-let touchStartY = 0;
-document.getElementById('product-drawer').addEventListener('touchstart', e => {
-  touchStartY = e.touches[0].clientY;
-}, { passive: true });
-document.getElementById('product-drawer').addEventListener('touchmove', e => {
-  const dy = e.touches[0].clientY - touchStartY;
-  if (dy > 80 && document.getElementById('drawer-scroll').scrollTop === 0) {
-    closeDrawer();
-  }
-}, { passive: true });
-
-render();
-
-// ─────────────────────────────────────────
-// PDF EXPORT
-// ─────────────────────────────────────────
+// ─── PDF EXPORT ───────────────────────────────────────────────────────────────
 function exportPDF() {
-  if (!window.jspdf) { toast('PDF library not loaded yet — try again in a moment'); return; }
-
+  if (!window.jspdf) { toast('PDF library loading — try again'); return; }
   const { jsPDF } = window.jspdf;
-  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
-
-  const PAGE_W = 792;
-  const MARGIN = 22;
-  const COL_HEADS = ['STRAIN / BRAND','TYPE','THC','LINEAGE','EFFECTS',
-                     'THERAPEUTIC','NEGATIVES','TERPENES','FLAVOR / AROMA','NOTES'];
-
-  // Brand colors
-  const GREEN_DARK  = [26,51,32];
-  const GREEN_MID   = [45,110,62];
-  const GREEN_LIGHT = [237,247,240];
-  const GREEN_ACC   = [42,122,69];
-  const PINK_DARK   = [181,36,78];
-  const PINK_LIGHT  = [253,232,239];
-  const PINK_FAINT  = [245,192,208];
-  const WHITE       = [255,255,255];
-  const DIM         = [106,90,96];
-
-  // Type colors: indica=pink, sativa=green, hybrid=forest green
-  const TYPE_CLR = {
-    'indica':     [181,36,78],
-    'indica-dom': [232,80,117],
-    'hybrid':     [26,110,58],
-    'sativa-dom': [32,122,48],
-    'sativa':     [45,158,69],
-  };
-  const TYPE_LBL = {
-    'indica':'Indica','indica-dom':'Indica Dominant','hybrid':'Hybrid',
-    'sativa-dom':'Sativa Dominant','sativa':'Sativa',
-  };
+  const doc = new jsPDF({ orientation:'landscape', unit:'pt', format:'letter' });
+  const W = 792, M = 22;
+  const HEADS = ['STRAIN / BRAND','TYPE','THC','LINEAGE','EFFECTS','THERAPEUTIC','NEGATIVES','TERPENES','FLAVOR / AROMA','NOTES'];
+  const G_DARK=[26,51,32], G_MID=[45,110,62], G_LIGHT=[237,247,240], G_ACC=[42,122,69];
+  const P_DARK=[181,36,78], P_LIGHT=[253,232,239], P_FAINT=[245,192,208];
+  const WHITE=[255,255,255], DIM=[106,90,96];
+  const TYPE_CLR = {'indica':[181,36,78],'indica-dom':[232,80,117],'hybrid':[26,110,58],'sativa-dom':[32,122,48],'sativa':[45,158,69]};
 
   const groups = {
-    'FLOWER & PRE-ROLLS': state.products.filter(p => p.category==='flower'||p.category==='preroll'),
-    'VAPES — DISPOSABLES & CARTRIDGES': state.products.filter(p => p.category==='vape'),
+    'FLOWER & PRE-ROLLS': products.filter(p=>p.cat==='flower'||p.cat==='preroll'),
+    'VAPES — DISPOSABLES & CARTRIDGES': products.filter(p=>p.cat==='vape'),
   };
 
-  function dedup(products) {
-    const seen = new Map();
-    products.forEach(p => {
-      const key = p.name + '|' + p.brand;
-      if (!seen.has(key)) {
-        seen.set(key, { ...p, thcDisplay: p.thc ? p.thc + '%' : 'N/A' });
-      } else {
-        const ex = seen.get(key);
+  // Deduplicate vapes
+  function dedup(arr) {
+    const m = new Map();
+    arr.forEach(p => {
+      const k = p.name+'|'+p.brand;
+      if (!m.has(k)) { m.set(k,{...p, thcStr: p.thc?p.thc+'%':'N/A'}); }
+      else {
+        const ex = m.get(k);
         if (p.thc && p.thc !== ex.thc) {
-          const a = ex.thc ? ex.thc + '%' : '';
-          const b = p.thc ? p.thc + '%' : '';
-          ex.thcDisplay = p.subtype === 'Disposable'
-            ? `Disp ${b}${a ? ' / Cart ' + a : ''}`
-            : `${a ? 'Disp ' + a + ' / ' : ''}Cart ${b}`;
+          const a = ex.thc?ex.thc+'%':'', b = p.thc?p.thc+'%':'';
+          ex.thcStr = p.sub==='Disposable' ? `Disp ${b}${a?' / Cart '+a:''}` : `${a?'Disp '+a+' / ':''}Cart ${b}`;
         }
       }
     });
-    return [...seen.values()];
+    return [...m.values()];
   }
 
   function makeRow(p) {
-    const r = state.research[p.id] || {};
-    const thc = p.thcDisplay || (p.thc ? p.thc + '%' : 'N/A');
+    const r = research[p.id]||{};
     return [
-      p.name + '\n' + p.brand,
-      TYPE_LBL[p.type] || p.type || '—',
-      thc,
-      r.lineage || '—',
-      (r.effects||[]).join(', ') || '—',
-      (r.therapeutic||[]).join(', ') || '—',
-      (r.negatives||[]).join(', ') || '—',
-      (r.terpenes||[]).join(', ') || '—',
-      [...(r.flavors||[]),...(r.aroma||[])].join(', ') || '—',
-      r.misc || (r.researched ? '—' : 'Not yet researched'),
+      p.name+'\n'+p.brand,
+      TYPE_LBL[p.type]||p.type||'—',
+      p.thcStr||(p.thc?p.thc+'%':'N/A'),
+      r.lineage||'—',
+      (r.effects||[]).join(', ')||'—',
+      (r.therapeutic||[]).join(', ')||'—',
+      (r.negatives||[]).join(', ')||'—',
+      (r.terpenes||[]).join(', ')||'—',
+      [...(r.flavors||[]),...(r.aroma||[])].join(', ')||'—',
+      r.misc||(r.researched?'—':'Not yet researched'),
     ];
   }
 
   const drawBanner = () => {
-    // Dark green bg
-    doc.setFillColor(...GREEN_DARK);
-    doc.rect(0, 0, PAGE_W, 28, 'F');
-    // Pink bottom stripe
-    doc.setFillColor(...PINK_DARK);
-    doc.rect(0, 26, PAGE_W, 2, 'F');
-    // Title
+    doc.setFillColor(...G_DARK); doc.rect(0,0,W,28,'F');
+    doc.setFillColor(...P_DARK); doc.rect(0,26,W,2,'F');
     doc.setFontSize(9); doc.setTextColor(...WHITE); doc.setFont('helvetica','bold');
-    doc.text('LEGIT CANNABIS', PAGE_W/2, 12, {align:'center'});
-    doc.setFontSize(6); doc.setFont('helvetica','normal');
-    doc.setTextColor(240, 208, 218);
-    doc.text(
-      'South Metro · Rosemount, MN  ·  Strain Reference Sheet  ·  ' +
-      'Type & THC% from mnlegitcannabis.com  ·  Pink = Indica  ·  Green = Sativa',
-      PAGE_W/2, 22, {align:'center'}
-    );
+    doc.text('LEGIT CANNABIS',W/2,12,{align:'center'});
+    doc.setFontSize(6); doc.setFont('helvetica','normal'); doc.setTextColor(240,208,218);
+    doc.text('South Metro · Rosemount, MN  ·  Strain Reference  ·  Pink=Indica  ·  Green=Sativa',W/2,22,{align:'center'});
   };
 
   drawBanner();
-  let startY = 28;
+  let y = 28;
 
-  Object.entries(groups).forEach(([secLabel, rawProducts]) => {
-    if (!rawProducts.length) return;
-    const products = secLabel.includes('VAPE') ? dedup(rawProducts) : rawProducts;
-    const rows = products.map(makeRow);
-
-    // Section header — green bg with pink top line
-    doc.setFillColor(...PINK_DARK);
-    doc.rect(MARGIN, startY, PAGE_W-MARGIN*2, 1.5, 'F');
-    doc.setFillColor(...GREEN_MID);
-    doc.rect(MARGIN, startY+1.5, PAGE_W-MARGIN*2, 14, 'F');
+  Object.entries(groups).forEach(([lbl, raw]) => {
+    if (!raw.length) return;
+    const rows = (lbl.includes('VAPE') ? dedup(raw) : raw).map(makeRow);
+    const prods = lbl.includes('VAPE') ? dedup(raw) : raw;
+    doc.setFillColor(...P_DARK); doc.rect(M,y,W-M*2,1.5,'F');
+    doc.setFillColor(...G_MID);  doc.rect(M,y+1.5,W-M*2,14,'F');
     doc.setFontSize(6.5); doc.setTextColor(...WHITE); doc.setFont('helvetica','bold');
-    doc.text('  ' + secLabel, MARGIN+4, startY+11);
-    startY += 15.5;
-
+    doc.text('  '+lbl, M+4, y+11);
+    y += 15.5;
     doc.autoTable({
-      head: [COL_HEADS],
-      body: rows,
-      startY,
-      margin: {left:MARGIN, right:MARGIN},
-      tableWidth: PAGE_W-MARGIN*2,
-      styles: {
-        fontSize: 6.8,
-        cellPadding: {top:3, bottom:3, left:3, right:2},
-        valign: 'top',
-        lineColor: PINK_FAINT,
-        lineWidth: 0.3,
-        textColor: [26,26,18],
-        overflow: 'linebreak',
-      },
-      headStyles: {
-        fillColor: PINK_DARK,
-        textColor: WHITE,
-        fontStyle: 'bold',
-        fontSize: 6.5,
-        halign: 'center',
-        lineColor: GREEN_ACC,
-        lineWidth: 1.5,
-      },
-      // alternate: faint pink rows, faint green rows
-      rowStyles: {0: {fillColor: PINK_LIGHT}},
-      alternateRowStyles: {fillColor: GREEN_LIGHT},
-      columnStyles: {
-        0: {fontStyle:'bold'},
-        1: {cellWidth:65, halign:'center'},
-        2: {cellWidth:56, halign:'center', fontStyle:'bold', textColor:GREEN_ACC},
-        3: {cellWidth:90},
-        4: {cellWidth:88},
-        5: {cellWidth:84},
-        6: {cellWidth:66},
-        7: {cellWidth:66},
-        8: {cellWidth:76},
-        9: {cellWidth:90, fontStyle:'italic', textColor:DIM},
-      },
-      didParseCell(data) {
-        if (data.section==='body' && data.column.index===1) {
-          const clr = TYPE_CLR[products[data.row.index]?.type];
-          if (clr) data.cell.styles.textColor = clr;
-        }
-      },
-      didDrawPage() {
-        drawBanner();
-      },
+      head:[HEADS], body:rows, startY:y,
+      margin:{left:M,right:M}, tableWidth:W-M*2,
+      styles:{fontSize:6.8,cellPadding:{top:3,bottom:3,left:3,right:2},valign:'top',lineColor:P_FAINT,lineWidth:.3,textColor:[26,26,18],overflow:'linebreak'},
+      headStyles:{fillColor:P_DARK,textColor:WHITE,fontStyle:'bold',fontSize:6.5,halign:'center',lineColor:G_ACC,lineWidth:1.5},
+      rowStyles:{0:{fillColor:P_LIGHT}},
+      alternateRowStyles:{fillColor:G_LIGHT},
+      columnStyles:{0:{fontStyle:'bold'},1:{cellWidth:65,halign:'center'},2:{cellWidth:54,halign:'center',fontStyle:'bold',textColor:G_ACC},3:{cellWidth:88},4:{cellWidth:86},5:{cellWidth:82},6:{cellWidth:64},7:{cellWidth:64},8:{cellWidth:74},9:{cellWidth:88,fontStyle:'italic',textColor:DIM}},
+      didParseCell(d){if(d.section==='body'&&d.column.index===1){const c=TYPE_CLR[prods[d.row.index]?.type];if(c)d.cell.styles.textColor=c;}},
+      didDrawPage(){drawBanner();},
     });
-
-    startY = doc.lastAutoTable.finalY + 6;
+    y = doc.lastAutoTable.finalY + 6;
   });
 
-  // Footer — faint pink bg, pink top border
-  const fy = doc.lastAutoTable.finalY + 3;
-  doc.setFillColor(...PINK_DARK);
-  doc.rect(MARGIN, fy, PAGE_W-MARGIN*2, 1.5, 'F');
-  doc.setFillColor(253, 244, 246);
-  doc.rect(MARGIN, fy+1.5, PAGE_W-MARGIN*2, 14, 'F');
+  const fy = doc.lastAutoTable.finalY+3;
+  doc.setFillColor(...P_DARK); doc.rect(M,fy,W-M*2,1.5,'F');
+  doc.setFillColor(253,244,246); doc.rect(M,fy+1.5,W-M*2,14,'F');
   doc.setFontSize(5.8); doc.setTextColor(...DIM); doc.setFont('helvetica','normal');
-  const researched = state.products.filter(p=>state.research[p.id]?.researched).length;
-  const total = state.products.filter(p=>p.category!=='edible').length;
-  doc.text(
-    `Type & THC% from mnlegitcannabis.com  ·  Research via AI  ·  Verify with POS  ·  ${researched}/${total} strains researched  ·  Generated ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`,
-    MARGIN+4, fy+10
-  );
-
-  doc.save(`Legit_Cannabis_Strains_${new Date().toISOString().slice(0,10)}.pdf`);
-  toast(`📄 Exported — ${researched}/${total} strains researched`);
+  const done = products.filter(p=>research[p.id]?.researched).length;
+  doc.text(`Type & THC% from mnlegitcannabis.com  ·  Research via AI  ·  Verify with POS  ·  ${done}/${products.filter(p=>p.cat!=='edible').length} researched  ·  ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`, M+4, fy+10);
+  doc.save(`Legit_Strains_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast(`📄 Exported (${done} researched)`);
 }
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+document.getElementById('search').addEventListener('input', e => {
+  query = e.target.value;
+  document.getElementById('srch-x').classList.toggle('show', !!query);
+  render();
+});
+let touchY = 0;
+document.getElementById('drawer').addEventListener('touchstart', e => { touchY = e.touches[0].clientY; }, {passive:true});
+document.getElementById('drawer').addEventListener('touchmove', e => {
+  if (e.touches[0].clientY - touchY > 80 && document.getElementById('drawer-scroll').scrollTop === 0) closeDrawer();
+}, {passive:true});
+
+updateLastUpdated();
+render();
 </script>
 </body>
 </html>
