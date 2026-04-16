@@ -771,8 +771,9 @@ body {
 
     <div class="settings-group">
       <div class="settings-group-title">🗑 Data</div>
-      <div class="settings-desc">Clear all cached research data (keeps menu products and API key).</div>
-      <button class="settings-btn btn-red" onclick="clearResearch()">Clear Research Cache</button>
+      <div class="settings-desc">Clear stuck or errored research so strains can be re-researched.</div>
+      <button class="settings-btn btn-red" onclick="clearStuck()">🔧 Clear Stuck / Errored Research</button>
+      <button class="settings-btn btn-red" style="margin-top:6px;opacity:0.7" onclick="clearResearch()">Clear ALL Research Cache</button>
     </div>
 
     <div class="settings-group">
@@ -869,7 +870,6 @@ const MENU_PAGES = [
   'https://shop.mnlegitcannabis.com/south-metro/menu?page=2',
   'https://shop.mnlegitcannabis.com/south-metro/menu?page=3',
 ];
-const CORS_PROXY = 'https://api.allorigins.win/get?url=';
 
 // ─────────────────────────────────────────
 // STATE & STORAGE
@@ -1074,14 +1074,18 @@ async function researchStrain(id) {
   if (state.selected === id) renderDrawer(p);
 
   const isConcentrate = p.category === 'vape';
-  const prompt = `Cannabis ${isConcentrate ? 'concentrate/vape strain' : 'strain'}: "${p.name}"${p.thc ? `, ${p.thc}% THC` : ''}${p.type ? `, ${p.type}` : ''}. Brand: ${p.brand}. Provide budtender-level strain intel. Respond ONLY with a JSON object, no markdown, no backticks:
+  const prompt = `Cannabis ${isConcentrate ? 'concentrate/vape strain' : 'strain'}: "${p.name}"${p.thc ? `, ${p.thc}% THC` : ''}${p.type ? `, ${p.type}` : ''}. Brand: ${p.brand}. Provide full budtender-level strain intel. Respond ONLY with a JSON object, no markdown, no backticks:
 {
   "lineage": "parent1 x parent2 (or unknown)",
   "description": "2-3 sentence dispensary-style overview",
-  "effects": ["up to 5 effects"],
+  "effects": ["up to 5 psychoactive effects"],
+  "therapeutic": ["3-5 medical or wellness uses"],
+  "negatives": ["2-4 common side effects like dry mouth, anxiety, etc"],
   "terpenes": ["top 3 terpenes"],
-  "flavors": ["top 3 flavors"],
-  "bestFor": ["2-3 use cases like Evening relaxation, Creative work, Sleep, etc"]
+  "flavors": ["top 3 flavor notes"],
+  "aroma": ["top 3 scent descriptors"],
+  "bestFor": ["2-3 use cases like Evening relaxation, Creative work, Sleep"],
+  "misc": "1-2 sentences of interesting budtender notes about history, growing traits, or who it is best for"
 }`;
 
   try {
@@ -1169,18 +1173,16 @@ async function refreshMenu(fromSettings = false) {
   refreshBtn.textContent = '⏳';
 
   const statusEl = fromSettings ? document.getElementById('refresh-status') : null;
-  if (statusEl) { statusEl.style.display = 'block'; statusEl.className = 'settings-status'; statusEl.textContent = 'Fetching menu pages…'; }
+  if (statusEl) { statusEl.style.display = 'block'; statusEl.className = 'settings-status'; statusEl.textContent = 'Fetching menu from site…'; }
 
   try {
-    const allRaw = [];
-    for (const url of MENU_PAGES) {
-      const proxyUrl = CORS_PROXY + encodeURIComponent(url);
-      const res = await fetch(proxyUrl);
-      const json = await res.json();
-      allRaw.push(json.contents || '');
-    }
+    const menuUrl = API_PROXY.replace('/api/claude', '/api/menu');
+    const res = await fetch(menuUrl);
+    if (!res.ok) throw new Error(`Server error ${res.status}`);
+    const json = await res.json();
+    const allRaw = (json.pages || []).join('\n');
 
-    const fetched = parseMenuHTML(allRaw.join('\n'));
+    const fetched = parseMenuHTML(allRaw);
 
     if (fetched.length === 0) {
       throw new Error('Could not parse menu — site structure may have changed');
@@ -1318,6 +1320,20 @@ function clearResearch() {
   S.set('research', {});
   render();
   toast('Research cache cleared');
+}
+
+function clearStuck() {
+  let count = 0;
+  Object.keys(state.research).forEach(id => {
+    const r = state.research[id];
+    if (r.loading || r.error || !r.researched) {
+      delete state.research[id];
+      count++;
+    }
+  });
+  S.set('research', state.research);
+  render();
+  toast(count > 0 ? `✓ Cleared ${count} stuck strain${count !== 1 ? 's' : ''} — tap to re-research` : 'No stuck strains found');
 }
 
 function updateLastUpdatedLabel() {
