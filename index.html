@@ -498,6 +498,9 @@ body {
 .r-tag.terpene { border-color: rgba(94,184,255,0.2); color: var(--blue); background: rgba(94,184,255,0.08); }
 .r-tag.flavor { border-color: rgba(255,184,48,0.2); color: var(--amber); background: rgba(255,184,48,0.08); }
 .r-tag.best { border-color: rgba(180,139,255,0.2); color: #b48bff; background: rgba(180,139,255,0.08); }
+.r-tag.therapeutic { border-color: rgba(116,201,168,0.2); color: #74c9a8; background: rgba(116,201,168,0.08); }
+.r-tag.negative { border-color: rgba(255,94,108,0.2); color: var(--red); background: rgba(255,94,108,0.08); }
+.r-tag.aroma { border-color: rgba(255,184,48,0.15); color: #ffcc66; background: rgba(255,204,102,0.08); }
 
 .r-lineage {
   font-family: 'Space Mono', monospace;
@@ -703,7 +706,7 @@ body {
       <div class="brand">LEGIT<span> / Staff</span></div>
       <div class="header-actions">
         <div class="icon-btn" id="refresh-btn" onclick="refreshMenu()" title="Check for updates">
-          🔄
+          <span id="refresh-icon">🔄</span>
           <div class="badge" id="new-badge"></div>
         </div>
         <div class="icon-btn" onclick="exportPDF()" title="Export strain reference PDF">📄</div>
@@ -1031,15 +1034,71 @@ function renderDrawer(p) {
     `;
   } else if (research?.researched) {
     const ts = research.timestamp ? new Date(research.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+    const tags = (arr, cls) => arr?.length ? arr.map(t => `<span class="r-tag ${cls}">${t}</span>`).join('') : '';
     researchHtml = `
       <div class="research-label"><span class="dot-live"></span> Strain Intel</div>
       <div class="research-results">
-        ${research.description ? `<div class="r-block"><div class="r-block-title">Overview</div><div class="r-block-text">${research.description}</div></div>` : ''}
-        ${research.lineage ? `<div class="r-block"><div class="r-block-title">Lineage</div><div class="r-lineage">${research.lineage}</div></div>` : ''}
-        ${research.effects?.length ? `<div class="r-block"><div class="r-block-title">Effects</div><div class="r-tags">${research.effects.map(e => `<span class="r-tag effect">${e}</span>`).join('')}</div></div>` : ''}
-        ${research.terpenes?.length ? `<div class="r-block"><div class="r-block-title">Terpenes</div><div class="r-tags">${research.terpenes.map(t => `<span class="r-tag terpene">${t}</span>`).join('')}</div></div>` : ''}
-        ${research.flavors?.length ? `<div class="r-block"><div class="r-block-title">Flavor</div><div class="r-tags">${research.flavors.map(f => `<span class="r-tag flavor">${f}</span>`).join('')}</div></div>` : ''}
-        ${research.bestFor?.length ? `<div class="r-block"><div class="r-block-title">Best For</div><div class="r-tags">${research.bestFor.map(b => `<span class="r-tag best">${b}</span>`).join('')}</div></div>` : ''}
+
+        ${research.description ? `
+          <div class="r-block">
+            <div class="r-block-title">Overview</div>
+            <div class="r-block-text">${research.description}</div>
+          </div>` : ''}
+
+        ${research.lineage ? `
+          <div class="r-block">
+            <div class="r-block-title">Lineage</div>
+            <div class="r-lineage">${research.lineage}</div>
+          </div>` : ''}
+
+        ${research.effects?.length ? `
+          <div class="r-block">
+            <div class="r-block-title">Effects</div>
+            <div class="r-tags">${tags(research.effects, 'effect')}</div>
+          </div>` : ''}
+
+        ${research.therapeutic?.length ? `
+          <div class="r-block">
+            <div class="r-block-title">Therapeutic</div>
+            <div class="r-tags">${tags(research.therapeutic, 'therapeutic')}</div>
+          </div>` : ''}
+
+        ${research.negatives?.length ? `
+          <div class="r-block">
+            <div class="r-block-title">Negatives</div>
+            <div class="r-tags">${tags(research.negatives, 'negative')}</div>
+          </div>` : ''}
+
+        ${research.terpenes?.length ? `
+          <div class="r-block">
+            <div class="r-block-title">Terpenes</div>
+            <div class="r-tags">${tags(research.terpenes, 'terpene')}</div>
+          </div>` : ''}
+
+        ${research.flavors?.length ? `
+          <div class="r-block">
+            <div class="r-block-title">Flavors</div>
+            <div class="r-tags">${tags(research.flavors, 'flavor')}</div>
+          </div>` : ''}
+
+        ${research.aroma?.length ? `
+          <div class="r-block">
+            <div class="r-block-title">Aroma</div>
+            <div class="r-tags">${tags(research.aroma, 'aroma')}</div>
+          </div>` : ''}
+
+        ${research.bestFor?.length ? `
+          <div class="r-block">
+            <div class="r-block-title">Best For</div>
+            <div class="r-tags">${tags(research.bestFor, 'best')}</div>
+          </div>` : ''}
+
+        ${research.misc ? `
+          <div class="r-block">
+            <div class="r-block-title">Budtender Notes</div>
+            <div class="r-block-text" style="font-style:italic;opacity:0.8">${research.misc}</div>
+          </div>` : ''}
+
         ${ts ? `<div class="r-timestamp">Researched ${ts}</div>` : ''}
       </div>
       <button class="research-btn" style="margin-top:16px;opacity:0.5;font-size:10px" onclick="researchStrain('${p.id}')">🔄 Re-research</button>
@@ -1169,8 +1228,8 @@ async function refreshMenu(fromSettings = false) {
   if (refreshing) return;
   refreshing = true;
 
-  const refreshBtn = document.getElementById('refresh-btn');
-  refreshBtn.textContent = '⏳';
+  const refreshIcon = document.getElementById('refresh-icon');
+  if (refreshIcon) refreshIcon.textContent = '⏳';
 
   const statusEl = fromSettings ? document.getElementById('refresh-status') : null;
   if (statusEl) { statusEl.style.display = 'block'; statusEl.className = 'settings-status'; statusEl.textContent = 'Fetching menu from site…'; }
@@ -1189,23 +1248,22 @@ async function refreshMenu(fromSettings = false) {
     }
 
     const currentIds = new Set(state.products.map(p => p.id));
-    const fetchedIds = new Set(fetched.map(p => p.id));
+    const fetchedIds  = new Set(fetched.map(p => p.id));
 
-    const newProducts = fetched.filter(p => !currentIds.has(p.id));
+    const newProducts     = fetched.filter(p => !currentIds.has(p.id));
     const removedProducts = state.products.filter(p => !fetchedIds.has(p.id));
 
     if (newProducts.length > 0 || removedProducts.length > 0) {
-      // Merge: keep existing + add new, mark removed
       state.products = [
         ...state.products.filter(p => fetchedIds.has(p.id)),
         ...newProducts,
       ];
       S.set('products', state.products);
-      document.getElementById('new-badge').classList.add('show');
+      const badge = document.getElementById('new-badge');
+      if (badge) badge.classList.add('show');
     }
 
-    const now = new Date();
-    state.lastUpdated = now.toISOString();
+    state.lastUpdated = new Date().toISOString();
     S.set('lastUpdated', state.lastUpdated);
 
     const msg = newProducts.length === 0 && removedProducts.length === 0
@@ -1216,12 +1274,12 @@ async function refreshMenu(fromSettings = false) {
     toast(msg);
     render();
   } catch (err) {
-    const errMsg = `Refresh failed: ${err.message}`;
-    if (statusEl) { statusEl.className = 'settings-status error'; statusEl.textContent = errMsg; }
-    else toast('Refresh failed');
+    const msg = `Refresh failed: ${err.message}`;
+    if (statusEl) { statusEl.className = 'settings-status error'; statusEl.textContent = msg; }
+    else toast(msg);
   }
 
-  refreshBtn.textContent = '🔄';
+  if (refreshIcon) refreshIcon.textContent = '🔄';
   refreshing = false;
   updateLastUpdatedLabel();
 }
