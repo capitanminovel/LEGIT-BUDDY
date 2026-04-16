@@ -5,6 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Legit Cannabis · Staff</title>
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Space+Mono:wght@400;700&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <style>
 :root {
   --bg: #080808;
@@ -704,7 +706,8 @@ body {
           🔄
           <div class="badge" id="new-badge"></div>
         </div>
-        <div class="icon-btn" onclick="openSettings()">⚙️</div>
+        <div class="icon-btn" onclick="exportPDF()" title="Export strain reference PDF">📄</div>
+      <div class="icon-btn" onclick="openSettings()">⚙️</div>
       </div>
     </div>
     <div class="search-wrap">
@@ -747,18 +750,6 @@ body {
     <div class="settings-title">Settings</div>
   </div>
   <div class="settings-scroll">
-
-    <div class="settings-group">
-      <div class="settings-group-title">🤖 Claude API Key</div>
-      <div class="settings-desc">
-        Required for strain research. Get yours free at
-        <a href="https://console.anthropic.com" target="_blank">console.anthropic.com</a>.
-        Your key is stored locally on this device only.
-      </div>
-      <input class="settings-input" id="api-key-input" type="password" placeholder="sk-ant-…">
-      <button class="settings-btn btn-green" onclick="saveApiKey()">💾 Save API Key</button>
-      <div id="api-key-status" class="settings-status" style="display:none"></div>
-    </div>
 
     <div class="settings-group">
       <div class="settings-group-title">📋 Menu Updates</div>
@@ -891,7 +882,6 @@ const S = {
 let state = {
   products: S.get('products') || INITIAL_PRODUCTS,
   research: S.get('research') || {},
-  apiKey: S.get('apiKey') || '',
   catFilter: 'all',
   typeFilter: 'all',
   query: '',
@@ -1073,15 +1063,12 @@ function renderDrawer(p) {
 // ─────────────────────────────────────────
 // STRAIN RESEARCH (Claude API)
 // ─────────────────────────────────────────
+const API_PROXY = 'https://legit-buddy-api.onrender.com/api/claude';
+
 async function researchStrain(id) {
-  if (!state.apiKey) {
-    toast('Add API key in ⚙️ Settings first');
-    return;
-  }
   const p = state.products.find(x => x.id === id);
   if (!p) return;
 
-  // Set loading state
   state.research[id] = { loading: true };
   S.set('research', state.research);
   if (state.selected === id) renderDrawer(p);
@@ -1098,14 +1085,9 @@ async function researchStrain(id) {
 }`;
 
   try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const res = await fetch(API_PROXY, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-api-key': state.apiKey,
-        'anthropic-version': '2023-06-01',
-        'anthropic-dangerous-direct-browser-access': 'true',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         model: 'claude-sonnet-4-20250514',
         max_tokens: 600,
@@ -1133,7 +1115,7 @@ async function researchStrain(id) {
     state.research[id] = { loading: false, error: `${err.message}` };
     S.set('research', state.research);
     if (state.selected === id) renderDrawer(p);
-    toast('Research failed — check API key');
+    toast('Research failed — try again');
   }
 }
 
@@ -1142,7 +1124,6 @@ async function researchStrain(id) {
 // ─────────────────────────────────────────
 let bulkRunning = false;
 async function bulkResearch() {
-  if (!state.apiKey) { toast('Add API key in Settings first'); return; }
   if (bulkRunning) return;
 
   const unresearched = state.products.filter(p =>
@@ -1323,36 +1304,12 @@ function parseMenuHTML(html) {
 // SETTINGS
 // ─────────────────────────────────────────
 function openSettings() {
-  document.getElementById('api-key-input').value = state.apiKey ? '••••••••••••••' : '';
   updateLastUpdatedLabel();
   document.getElementById('settings-overlay').classList.add('open');
 }
 
 function closeSettings() {
   document.getElementById('settings-overlay').classList.remove('open');
-}
-
-function saveApiKey() {
-  const val = document.getElementById('api-key-input').value.trim();
-  const statusEl = document.getElementById('api-key-status');
-  statusEl.style.display = 'block';
-
-  if (!val || val.startsWith('•')) {
-    statusEl.className = 'settings-status error';
-    statusEl.textContent = 'Enter a valid API key';
-    return;
-  }
-  if (!val.startsWith('sk-ant-')) {
-    statusEl.className = 'settings-status error';
-    statusEl.textContent = 'Key should start with sk-ant-';
-    return;
-  }
-
-  state.apiKey = val;
-  S.set('apiKey', val);
-  statusEl.className = 'settings-status success';
-  statusEl.textContent = '✓ API key saved';
-  document.getElementById('api-key-input').value = '••••••••••••••';
 }
 
 function clearResearch() {
@@ -1439,6 +1396,336 @@ document.getElementById('product-drawer').addEventListener('touchmove', e => {
 }, { passive: true });
 
 render();
-</script>
+
+// ─────────────────────────────────────────
+// PDF EXPORT
+// ─────────────────────────────────────────
+function exportPDF() {
+  if (!window.jspdf) { toast('PDF library not loaded yet — try again in a moment'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+
+  const PAGE_W = 792;
+  const MARGIN = 22;
+  const COL_HEADS = ['STRAIN / BRAND','TYPE','THC','LINEAGE','EFFECTS',
+                     'THERAPEUTIC','NEGATIVES','TERPENES','FLAVOR / AROMA','NOTES'];
+
+  // Brand colors
+  const GREEN_DARK  = [26,51,32];
+  const GREEN_MID   = [45,110,62];
+  const GREEN_LIGHT = [237,247,240];
+  const GREEN_ACC   = [42,122,69];
+  const PINK_DARK   = [181,36,78];
+  const PINK_LIGHT  = [253,232,239];
+  const PINK_FAINT  = [245,192,208];
+  const WHITE       = [255,255,255];
+  const DIM         = [106,90,96];
+
+  // Type colors: indica=pink, sativa=green, hybrid=forest green
+  const TYPE_CLR = {
+    'indica':     [181,36,78],
+    'indica-dom': [232,80,117],
+    'hybrid':     [26,110,58],
+    'sativa-dom': [32,122,48],
+    'sativa':     [45,158,69],
+  };
+  const TYPE_LBL = {
+    'indica':'Indica','indica-dom':'Indica Dominant','hybrid':'Hybrid',
+    'sativa-dom':'Sativa Dominant','sativa':'Sativa',
+  };
+
+  const groups = {
+    'FLOWER & PRE-ROLLS': state.products.filter(p => p.category==='flower'||p.category==='preroll'),
+    'VAPES — DISPOSABLES & CARTRIDGES': state.products.filter(p => p.category==='vape'),
+  };
+
+  function dedup(products) {
+    const seen = new Map();
+    products.forEach(p => {
+      const key = p.name + '|' + p.brand;
+      if (!seen.has(key)) {
+        seen.set(key, { ...p, thcDisplay: p.thc ? p.thc + '%' : 'N/A' });
+      } else {
+        const ex = seen.get(key);
+        if (p.thc && p.thc !== ex.thc) {
+          const a = ex.thc ? ex.thc + '%' : '';
+          const b = p.thc ? p.thc + '%' : '';
+          ex.thcDisplay = p.subtype === 'Disposable'
+            ? `Disp ${b}${a ? ' / Cart ' + a : ''}`
+            : `${a ? 'Disp ' + a + ' / ' : ''}Cart ${b}`;
+        }
+      }
+    });
+    return [...seen.values()];
+  }
+
+  function makeRow(p) {
+    const r = state.research[p.id] || {};
+    const thc = p.thcDisplay || (p.thc ? p.thc + '%' : 'N/A');
+    return [
+      p.name + '\n' + p.brand,
+      TYPE_LBL[p.type] || p.type || '—',
+      thc,
+      r.lineage || '—',
+      (r.effects||[]).join(', ') || '—',
+      (r.therapeutic||[]).join(', ') || '—',
+      (r.negatives||[]).join(', ') || '—',
+      (r.terpenes||[]).join(', ') || '—',
+      [...(r.flavors||[]),...(r.aroma||[])].join(', ') || '—',
+      r.misc || (r.researched ? '—' : 'Not yet researched'),
+    ];
+  }
+
+  const drawBanner = () => {
+    // Dark green bg
+    doc.setFillColor(...GREEN_DARK);
+    doc.rect(0, 0, PAGE_W, 28, 'F');
+    // Pink bottom stripe
+    doc.setFillColor(...PINK_DARK);
+    doc.rect(0, 26, PAGE_W, 2, 'F');
+    // Title
+    doc.setFontSize(9); doc.setTextColor(...WHITE); doc.setFont('helvetica','bold');
+    doc.text('LEGIT CANNABIS', PAGE_W/2, 12, {align:'center'});
+    doc.setFontSize(6); doc.setFont('helvetica','normal');
+    doc.setTextColor(240, 208, 218);
+    doc.text(
+      'South Metro · Rosemount, MN  ·  Strain Reference Sheet  ·  ' +
+      'Type & THC% from mnlegitcannabis.com  ·  Pink = Indica  ·  Green = Sativa',
+      PAGE_W/2, 22, {align:'center'}
+    );
+  };
+
+  drawBanner();
+  let startY = 28;
+
+  Object.entries(groups).forEach(([secLabel, rawProducts]) => {
+    if (!rawProducts.length) return;
+    const products = secLabel.includes('VAPE') ? dedup(rawProducts) : rawProducts;
+    const rows = products.map(makeRow);
+
+    // Section header — green bg with pink top line
+    doc.setFillColor(...PINK_DARK);
+    doc.rect(MARGIN, startY, PAGE_W-MARGIN*2, 1.5, 'F');
+    doc.setFillColor(...GREEN_MID);
+    doc.rect(MARGIN, startY+1.5, PAGE_W-MARGIN*2, 14, 'F');
+    doc.setFontSize(6.5); doc.setTextColor(...WHITE); doc.setFont('helvetica','bold');
+    doc.text('  ' + secLabel, MARGIN+4, startY+11);
+    startY += 15.5;
+
+    doc.autoTable({
+      head: [COL_HEADS],
+      body: rows,
+      startY,
+      margin: {left:MARGIN, right:MARGIN},
+      tableWidth: PAGE_W-MARGIN*2,
+      styles: {
+        fontSize: 6.8,
+        cellPadding: {top:3, bottom:3, left:3, right:2},
+        valign: 'top',
+        lineColor: PINK_FAINT,
+        lineWidth: 0.3,
+        textColor: [26,26,18],
+        overflow: 'linebreak',
+      },
+      headStyles: {
+        fillColor: PINK_DARK,
+        textColor: WHITE,
+        fontStyle: 'bold',
+        fontSize: 6.5,
+        halign: 'center',
+        lineColor: GREEN_ACC,
+        lineWidth: 1.5,
+      },
+      // alternate: faint pink rows, faint green rows
+      rowStyles: {0: {fillColor: PINK_LIGHT}},
+      alternateRowStyles: {fillColor: GREEN_LIGHT},
+      columnStyles: {
+        0: {fontStyle:'bold'},
+        1: {cellWidth:65, halign:'center'},
+        2: {cellWidth:56, halign:'center', fontStyle:'bold', textColor:GREEN_ACC},
+        3: {cellWidth:90},
+        4: {cellWidth:88},
+        5: {cellWidth:84},
+        6: {cellWidth:66},
+        7: {cellWidth:66},
+        8: {cellWidth:76},
+        9: {cellWidth:90, fontStyle:'italic', textColor:DIM},
+      },
+      didParseCell(data) {
+        if (data.section==='body' && data.column.index===1) {
+          const clr = TYPE_CLR[products[data.row.index]?.type];
+          if (clr) data.cell.styles.textColor = clr;
+        }
+      },
+      didDrawPage() {
+        drawBanner();
+      },
+    });
+
+    startY = doc.lastAutoTable.finalY + 6;
+  });
+
+  // Footer — faint pink bg, pink top border
+  const fy = doc.lastAutoTable.finalY + 3;
+  doc.setFillColor(...PINK_DARK);
+  doc.rect(MARGIN, fy, PAGE_W-MARGIN*2, 1.5, 'F');
+  doc.setFillColor(253, 244, 246);
+  doc.rect(MARGIN, fy+1.5, PAGE_W-MARGIN*2, 14, 'F');
+  doc.setFontSize(5.8); doc.setTextColor(...DIM); doc.setFont('helvetica','normal');
+  const researched = state.products.filter(p=>state.research[p.id]?.researched).length;
+  const total = state.products.filter(p=>p.category!=='edible').length;
+  doc.text(
+    `Type & THC% from mnlegitcannabis.com  ·  Research via AI  ·  Verify with POS  ·  ${researched}/${total} strains researched  ·  Generated ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`,
+    MARGIN+4, fy+10
+  );
+
+  doc.save(`Legit_Cannabis_Strains_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast(`📄 Exported — ${researched}/${total} strains researched`);
+}
+  if (!window.jspdf) { toast('PDF library not loaded yet — try again in a moment'); return; }
+
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'landscape', unit: 'pt', format: 'letter' });
+
+  const PAGE_W = 792;
+  const MARGIN = 22;
+  const COL_HEADS = ['STRAIN / BRAND','TYPE','THC','LINEAGE','EFFECTS',
+                     'THERAPEUTIC','NEGATIVES','TERPENES','FLAVOR / AROMA','NOTES'];
+
+  const TYPE_CLR = {
+    'indica':[26,80,138],'indica-dom':[90,58,138],'hybrid':[45,122,72],
+    'sativa-dom':[138,79,0],'sativa':[138,98,0],
+  };
+  const TYPE_LBL = {
+    'indica':'Indica','indica-dom':'Indica Dominant','hybrid':'Hybrid',
+    'sativa-dom':'Sativa Dominant','sativa':'Sativa',
+  };
+
+  const groups = {
+    'FLOWER & PRE-ROLLS': state.products.filter(p => p.category==='flower'||p.category==='preroll'),
+    'VAPES — DISPOSABLES & CARTRIDGES': state.products.filter(p => p.category==='vape'),
+  };
+
+  // Deduplicate vapes by name — combine THC display
+  function dedup(products) {
+    const seen = new Map();
+    products.forEach(p => {
+      const key = p.name + '|' + p.brand;
+      if (!seen.has(key)) {
+        seen.set(key, { ...p, thcDisplay: p.thc ? p.thc + '%' : 'N/A' });
+      } else {
+        const ex = seen.get(key);
+        if (p.thc && p.thc !== ex.thc) {
+          const a = ex.thc ? ex.thc + '%' : '';
+          const b = p.thc ? p.thc + '%' : '';
+          ex.thcDisplay = p.subtype === 'Disposable'
+            ? `Disp ${b}${a ? ' / Cart ' + a : ''}`
+            : `${a ? 'Disp ' + a + ' / ' : ''}Cart ${b}`;
+        }
+      }
+    });
+    return [...seen.values()];
+  }
+
+  function makeRow(p) {
+    const r = state.research[p.id] || {};
+    const thc = p.thcDisplay || (p.thc ? p.thc + '%' : 'N/A');
+    return [
+      p.name + '\n' + p.brand,
+      TYPE_LBL[p.type] || p.type || '—',
+      thc,
+      r.lineage || '—',
+      (r.effects||[]).join(', ') || '—',
+      (r.therapeutic||[]).join(', ') || '—',
+      (r.negatives||[]).join(', ') || '—',
+      (r.terpenes||[]).join(', ') || '—',
+      [...(r.flavors||[]),...(r.aroma||[])].join(', ') || '—',
+      r.misc || (r.researched ? '—' : 'Not yet researched'),
+    ];
+  }
+
+  // Title banner
+  const drawTitle = (label) => {
+    doc.setFillColor(22,42,30);
+    doc.rect(0,0,PAGE_W,22,'F');
+    doc.setFontSize(7); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
+    doc.text(label, PAGE_W/2, 14, {align:'center'});
+  };
+  drawTitle('LEGIT CANNABIS  ·  South Metro · Rosemount, MN  ·  Strain Reference Sheet  ·  Type & THC% from mnlegitcannabis.com');
+
+  let startY = 22;
+
+  Object.entries(groups).forEach(([secLabel, rawProducts]) => {
+    if (!rawProducts.length) return;
+    const products = secLabel.includes('VAPE') ? dedup(rawProducts) : rawProducts;
+    const rows = products.map(makeRow);
+
+    // Section header bar
+    doc.setFillColor(58,90,69);
+    doc.rect(MARGIN, startY, PAGE_W-MARGIN*2, 14, 'F');
+    doc.setFontSize(6.5); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold');
+    doc.text('  '+secLabel, MARGIN+4, startY+9.5);
+    startY += 14;
+
+    doc.autoTable({
+      head: [COL_HEADS],
+      body: rows,
+      startY,
+      margin: {left:MARGIN, right:MARGIN},
+      tableWidth: PAGE_W-MARGIN*2,
+      styles: {
+        fontSize:6.8, cellPadding:{top:3,bottom:3,left:3,right:2},
+        valign:'top', lineColor:[204,196,176], lineWidth:0.25,
+        textColor:[26,26,18], overflow:'linebreak',
+      },
+      headStyles: {
+        fillColor:[42,74,53], textColor:255, fontStyle:'bold',
+        fontSize:6.5, halign:'center',
+      },
+      alternateRowStyles: {fillColor:[244,240,230]},
+      columnStyles: {
+        0:{fontStyle:'bold'},
+        1:{cellWidth:65, halign:'center'},
+        2:{cellWidth:56, halign:'center', fontStyle:'bold', textColor:[45,122,72]},
+        3:{cellWidth:90},
+        4:{cellWidth:88},
+        5:{cellWidth:84},
+        6:{cellWidth:66},
+        7:{cellWidth:66},
+        8:{cellWidth:76},
+        9:{cellWidth:90, fontStyle:'italic', textColor:[122,112,96]},
+      },
+      didParseCell(data) {
+        if (data.section==='body' && data.column.index===1) {
+          const clr = TYPE_CLR[products[data.row.index]?.type];
+          if (clr) data.cell.styles.textColor = clr;
+        }
+      },
+      didDrawPage(data) {
+        drawTitle('LEGIT CANNABIS  ·  Strain Reference  ·  mnlegitcannabis.com');
+      },
+    });
+
+    startY = doc.lastAutoTable.finalY + 6;
+  });
+
+  // Footer
+  const fy = doc.lastAutoTable.finalY + 4;
+  doc.setFillColor(240,236,226);
+  doc.rect(MARGIN, fy, PAGE_W-MARGIN*2, 14, 'F');
+  doc.setDrawColor(204,196,176); doc.setLineWidth(0.4);
+  doc.line(MARGIN, fy, PAGE_W-MARGIN, fy);
+  doc.setFontSize(5.8); doc.setTextColor(122,112,96); doc.setFont('helvetica','normal');
+  const researched = state.products.filter(p=>state.research[p.id]?.researched).length;
+  const total = state.products.filter(p=>p.category!=='edible').length;
+  doc.text(
+    `Type & THC% from mnlegitcannabis.com  ·  Research via AI  ·  Verify with POS before advising  ·  ${researched}/${total} strains researched  ·  Generated ${new Date().toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}`,
+    MARGIN+4, fy+9
+  );
+
+  doc.save(`Legit_Cannabis_Strains_${new Date().toISOString().slice(0,10)}.pdf`);
+  toast(`📄 Exported — ${researched}/${total} strains researched`);
+}
 </body>
 </html>
